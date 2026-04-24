@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>The Helmet Forge — Menu</title>
+    <script> src = "js/three.js" </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+
+
+            background: linear-gradient(135deg, #0a1a2f, #0f243d);
+            font-family: "Orbitron", sans-serif;
+        }
+
+        h1 {
+            font-size: 52px;
+            color: #66ccff;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+            margin-bottom: 30px;
+            letter-spacing: 3px;
+        }
+
+        button {
+            padding: 15px 35px;
+            font-size: 22px;
+            border: none;
+            border-radius: 12px;
+            background: #1e90ff;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: 0.2s;
+            font-family: "Orbitron", sans-serif;
+        }
+
+        button:hover {
+            background: #187bdb;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>THE HELMET FORGE</h1>
+
+    <button onclick="enterSite()">Enter</button>
+
+    <script>
+        function enterSite() {
+            window.location.href = "index.html";
+        }
+    </script>
+
+    <script src="setup.js"></script>
+    <script src="build.js"></script>
+    <script src="animate.js"></script>
+    <script src="run.js"></script>
+
+</body>
+
+</html>
