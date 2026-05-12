@@ -4,10 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>The Helmet Forge — Menu</title>
-    <script> src = "js/three.js" </script>
 
     <link rel="stylesheet" href="css/layout.css">
-
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 
     <style>
@@ -33,20 +31,41 @@
 
 <body>
 
+    <div id="loading-screen">
+        <h1>THE HELMET FORGE</h1>
+
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+
+        <p id="loading-percent">0%</p>
+    </div>
+
     <h1>THE HELMET FORGE</h1>
 
-    <button onclick="enterSite()">Enter</button>
+    <button onclick="startLoading()">Enter</button>
 
     <script>
-        function enterSite() {
-            window.location.href = "index.html";
+        function startLoading() {
+            const loader = document.getElementById("loading-screen");
+            loader.style.display = "flex";
+
+            let progress = 0;
+            const bar = document.getElementById("progress-bar");
+            const percent = document.getElementById("loading-percent");
+
+            const interval = setInterval(() => {
+                progress += 2;
+                bar.style.width = progress + "%";
+                percent.textContent = progress + "%";
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    window.location.href = "index.html";
+                }
+            }, 40);
         }
     </script>
-
-    <script src="setup.js"></script>
-    <script src="build.js"></script>
-    <script src="animate.js"></script>
-    <script src="run.js"></script>
 
 </body>
 
