@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 
@@ -49,7 +48,6 @@
             renderer2.setSize(container.clientWidth, container.clientHeight);
             container.appendChild(renderer2.domElement);
 
-            // LIGHTING (guaranteed visibility)
             const ambient = new THREE.AmbientLight(0xffffff, 1.2);
             scene2.add(ambient);
 
@@ -63,19 +61,28 @@
                 (gltf) => {
                     helmetModel = gltf.scene;
 
-                    // AUTO-CENTER
                     const box = new THREE.Box3().setFromObject(helmetModel);
                     const center = box.getCenter(new THREE.Vector3());
                     helmetModel.position.sub(center);
 
-                    // AUTO-SCALE
                     const size = box.getSize(new THREE.Vector3()).length();
                     const scaleFactor = 2 / size;
                     helmetModel.scale.setScalar(scaleFactor * 2.5);
 
-                    // Add to scene
-                    scene2.add(helmetModel);
+                    helmetModel.traverse((child) => {
+                        if (child.isMesh) {
+                            child.material = new THREE.MeshPhongMaterial({
+                                color: 0x00ffff,
+                                emissive: 0x00ffff,
+                                emissiveIntensity: 1.5,
+                                transparent: true,
+                                opacity: 0.35,
+                                shininess: 200
+                            });
+                        }
+                    });
 
+                    scene2.add(helmetModel);
                     animateMenuHelmet();
                 },
                 undefined,
@@ -87,9 +94,17 @@
 
         function animateMenuHelmet() {
             requestAnimationFrame(animateMenuHelmet);
+
             if (helmetModel) {
                 helmetModel.rotation.y += 0.01;
+
+                helmetModel.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material.opacity = 0.25 + Math.sin(Date.now() * 0.003) * 0.1;
+                    }
+                });
             }
+
             renderer2.render(scene2, camera2);
         }
 
@@ -130,5 +145,7 @@
     </script>
 
 </body>
+
+</html>
 
 </html>
