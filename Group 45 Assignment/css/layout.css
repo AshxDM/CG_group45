@@ -150,20 +150,18 @@ h1 {
 }
 
 .slot-box {
-    width: 140px;
-    height: 140px;
-    background: rgba(10, 26, 47, 0.8);
-    border: 2px solid #66ccff;
-    border-radius: 12px;
+    background-color: rgba(0, 255, 255, 0.1);
+    border: 1px solid #00ffff;
+    border-radius: 10px;
+    padding: 25px;
+    width: 260px;
+    height: 180px;
+    text-align: center;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    color: #66ccff;
-    font-size: 20px;
-    letter-spacing: 2px;
-    cursor: pointer;
-    box-shadow: 0 0 18px rgba(102, 204, 255, 0.4);
-    transition: 0.2s;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
 }
 
 .slot-box:hover {
