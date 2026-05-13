@@ -4,81 +4,47 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
     background: linear-gradient(135deg, #0a1a2f, #0f243d);
     font-family: "Orbitron", sans-serif;
 }
 
-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+/* MENU */
+
+#menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 0.6s ease;
 }
 
-h1 {
+#menu h1 {
     font-size: 52px;
     color: #66ccff;
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
     margin-bottom: 30px;
     letter-spacing: 3px;
 }
 
-#welcome {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    z-index: 10;
-    font-family: "Orbitron", sans-serif;
-}
-
-#welcome h1 {
-    font-size: 52px;
-    color: #66ccff;
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
-    margin-bottom: 20px;
-    letter-spacing: 3px;
-}
-
-#welcome p {
-    font-size: 18px;
-    color: #66ccff;
-    margin: 5px 0;
-}
-
-#ui {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    color: #cce6ff;
-    z-index: 10;
-    font-size: 16px;
-    background: rgba(10, 26, 47, 0.7);
-    padding: 12px 16px;
-    border-radius: 10px;
-    border: 1px solid rgba(102, 204, 255, 0.4);
-    backdrop-filter: blur(4px);
-    font-family: "Orbitron", sans-serif;
-}
-
-#title-banner {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 12px 24px;
-    background: rgba(30, 144, 255, 0.7);
-    color: white;
+button {
+    padding: 15px 35px;
     font-size: 22px;
-    border-radius: 8px;
-    z-index: 10;
-    pointer-events: none;
-    box-shadow: 0 0 20px rgba(102, 204, 255, 0.8);
+    border: none;
+    border-radius: 14px;
+    background: #1e90ff;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: 0.2s;
     font-family: "Orbitron", sans-serif;
 }
+
+button:hover {
+    background: #187bdb;
+    transform: scale(1.05);
+}
+
+/* LOADING SCREEN */
 
 #loading-screen {
     position: fixed;
@@ -87,19 +53,37 @@ h1 {
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg, #0a1a2f, #0f243d);
-    display: none;
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    font-family: "Orbitron", sans-serif;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+}
+
+#loading-screen.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+#loading-screen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#helmet-container {
+    width: 220px;
+    height: 220px;
+    margin-bottom: 25px;
 }
 
 #loading-screen h1 {
     font-size: 52px;
     color: #66ccff;
-    letter-spacing: 3px;
     margin-bottom: 30px;
+    letter-spacing: 3px;
 }
 
 #progress-container {
@@ -109,14 +93,12 @@ h1 {
     border-radius: 12px;
     overflow: hidden;
     border: 2px solid #66ccff;
-    box-shadow: 0 0 12px rgba(102, 204, 255, 0.5);
 }
 
 #progress-bar {
     width: 0%;
     height: 100%;
     background: #1e90ff;
-    box-shadow: 0 0 10px rgba(30, 144, 255, 0.8);
     transition: width 0.1s linear;
 }
 
@@ -125,4 +107,73 @@ h1 {
     font-size: 20px;
     color: #66ccff;
     letter-spacing: 3px;
+}
+
+/* INDEX PAGE */
+
+#main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+h1 {
+    font-size: 52px;
+    color: #66ccff;
+    margin-bottom: 30px;
+    letter-spacing: 3px;
+}
+
+#welcome p {
+    font-size: 18px;
+    color: #66ccff;
+    margin: 5px 0;
+}
+
+#save-slots {
+    margin-top: 40px;
+    text-align: center;
+}
+
+#save-slots h2 {
+    color: #66ccff;
+    font-size: 32px;
+    letter-spacing: 3px;
+    margin-bottom: 25px;
+}
+
+.slot-row {
+    display: flex;
+    gap: 25px;
+    justify-content: center;
+}
+
+.slot-box {
+    width: 140px;
+    height: 140px;
+    background: rgba(10, 26, 47, 0.8);
+    border: 2px solid #66ccff;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #66ccff;
+    font-size: 20px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(102, 204, 255, 0.4);
+    transition: 0.2s;
+}
+
+.slot-box:hover {
+    transform: scale(1.08);
+    background: rgba(30, 144, 255, 0.3);
+    box-shadow: 0 0 25px rgba(102, 204, 255, 0.8);
+}
+
+#slot-message {
+    margin-top: 20px;
+    font-size: 20px;
+    letter-spacing: 2px;
 }

@@ -8,47 +8,35 @@
     <link rel="stylesheet" href="css/layout.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 
-    <style>
-        button {
-            padding: 15px 35px;
-            font-size: 22px;
-            border: none;
-            border-radius: 14px;
-            background: #1e90ff;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            transition: 0.2s;
-            font-family: "Orbitron", sans-serif;
-        }
 
-        button:hover {
-            background: #187bdb;
-            transform: scale(1.05);
-        }
-    </style>
 </head>
 
 <body>
 
     <div id="loading-screen">
         <h1>THE HELMET FORGE</h1>
-
         <div id="progress-container">
             <div id="progress-bar"></div>
         </div>
-
         <p id="loading-percent">0%</p>
     </div>
 
-    <h1>THE HELMET FORGE</h1>
-
-    <button onclick="startLoading()">Enter</button>
+    <div id="menu">
+        <h1>THE HELMET FORGE</h1>
+        <button onclick="startLoading()">Enter</button>
+    </div>
 
     <script>
         function startLoading() {
             const loader = document.getElementById("loading-screen");
-            loader.style.display = "flex";
+            const menu = document.getElementById("menu");
+
+            menu.style.opacity = "0";
+            menu.style.pointerEvents = "none";
+
+            setTimeout(() => {
+                loader.classList.add("visible");
+            }, 300);
 
             let progress = 0;
             const bar = document.getElementById("progress-bar");
@@ -61,7 +49,13 @@
 
                 if (progress >= 100) {
                     clearInterval(interval);
-                    window.location.href = "index.html";
+
+                    loader.classList.remove("visible");
+                    loader.classList.add("fade-out");
+
+                    setTimeout(() => {
+                        window.location.href = "index.html";
+                    }, 900);
                 }
             }, 40);
         }
