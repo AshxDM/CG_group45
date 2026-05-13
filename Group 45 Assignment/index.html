@@ -6,14 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
     <script src="js/three.js"></script>
     <script src="js/OrbitControls.js"></script>
 
-
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
-
-
     <link rel="stylesheet" href="css/layout.css">
 
     <title>The Helmet Forge</title>
@@ -21,14 +17,64 @@
 
 <body>
 
+    <div id="main-container">
+        <div id="welcome">
+            <h1>THE HELMET FORGE</h1>
+            <p>Craft, customise, and explore legendary helmets in 3D.</p>
+            <p>Use your mouse to rotate, zoom, and inspect your creation.</p>
+        </div>
 
-    <div id="welcome">
-        <h1>THE HELMET FORGE</h1>
-        <p>Craft, customise, and explore legendary helmets in 3D.</p>
-        <p>Use your mouse to rotate, zoom, and inspect your creation.</p>
+        <div id="save-slots">
+            <h2>SELECT SAVE SLOT</h2>
+            <div class="slot-row" id="slotRow">
+                <div class="slot-box">
+                    <p>SLOT 1</p>
+                    <button class="create-btn" onclick="createSlot(1)">Create</button>
+                    <button class="delete-btn" onclick="deleteSlot(this)">Delete</button>
+                </div>
+
+            </div>
+
+            <button id="add-slot-btn" onclick="addSlot()">+ Add Slot</button>
+            <p id="slot-message"></p>
+        </div>
     </div>
 
+    <script>
+        let slotCount = 1;
 
+        function createSlot(slot) {
+            localStorage.setItem("helmetForgeSaveSlot", slot);
+            window.location.href = "CreatorPage.html";
+        }
+
+        function deleteSlot(button) {
+            const slot = button.closest(".slot-box");
+            slot.remove();
+            const message = document.getElementById("slot-message");
+            message.textContent = "Slot deleted.";
+            message.style.color = "#ff3366";
+        }
+
+        function addSlot() {
+            slotCount++;
+            const slotRow = document.getElementById("slotRow");
+
+            const newSlot = document.createElement("div");
+            newSlot.classList.add("slot-box");
+            newSlot.innerHTML = `
+                <p>SLOT ${slotCount}</p>
+                <button class="create-btn" onclick="createSlot(${slotCount})">Create</button>
+                <button class="delete-btn" onclick="deleteSlot(this)">Delete</button>
+            `;
+
+            slotRow.appendChild(newSlot);
+
+            const message = document.getElementById("slot-message");
+            message.textContent = "Slot " + slotCount + " added.";
+            message.style.color = "#66ccff";
+        }
+    </script>
 
     <script type='x-shader/x-vertex' id='vertexShader'>
         attribute float alpha;
@@ -49,12 +95,93 @@
         }
     </script>
 
-
-    <!-- Your scripts -->
     <script src="Task3.1/animate.js"></script>
     <script src="Task3.1/build.js"></script>
     <script src="Task3.1/setup.js"></script>
     <script src="Task3.1/run.js"></script>
+
+    <style>
+        #save-slots {
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            color: #00ffff;
+        }
+
+        .slot-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .slot-box {
+            background-color: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            border-radius: 10px;
+            padding: 25px;
+            width: 260px;
+            height: 180px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            transition: 0.3s;
+        }
+
+        .slot-box:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+        }
+
+        .create-btn,
+        .delete-btn {
+            margin: 6px;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .create-btn {
+            background-color: #00aaff;
+            color: #fff;
+        }
+
+        .delete-btn {
+            background-color: #ff0044;
+            color: #fff;
+        }
+
+        .create-btn:hover {
+            background-color: #00ccff;
+        }
+
+        .delete-btn:hover {
+            background-color: #ff3366;
+        }
+
+        #add-slot-btn {
+            margin-top: 30px;
+            padding: 10px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            background-color: #00aaff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #add-slot-btn:hover {
+            background-color: #00ccff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+    </style>
 
 </body>
 

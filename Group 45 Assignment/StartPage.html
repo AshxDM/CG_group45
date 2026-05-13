@@ -4,50 +4,148 @@
 <head>
     <meta charset="UTF-8">
     <title>The Helmet Forge — Menu</title>
-    <script> src = "js/three.js" </script>
 
     <link rel="stylesheet" href="css/layout.css">
-
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 
-    <style>
-        button {
-            padding: 15px 35px;
-            font-size: 22px;
-            border: none;
-            border-radius: 12px;
-            background: #1e90ff;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            transition: 0.2s;
-            font-family: "Orbitron", sans-serif;
-        }
-
-        button:hover {
-            background: #187bdb;
-            transform: scale(1.05);
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 
 <body>
 
-    <h1>THE HELMET FORGE</h1>
+    <div id="loading-screen">
+        <h1>THE HELMET FORGE</h1>
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+        <p id="loading-percent">0%</p>
+    </div>
 
-    <button onclick="enterSite()">Enter</button>
+    <div id="menu">
+        <div id="helmet-preview"></div>
+
+        <h1>THE HELMET FORGE</h1>
+        <button onclick="startLoading()">Enter</button>
+    </div>
 
     <script>
-        function enterSite() {
-            window.location.href = "index.html";
+        let scene2, camera2, renderer2, helmetModel;
+
+        function initMenuHelmet() {
+            const container = document.getElementById("helmet-preview");
+
+            scene2 = new THREE.Scene();
+            camera2 = new THREE.PerspectiveCamera(
+                45,
+                container.clientWidth / container.clientHeight,
+                0.01,
+                5000
+            );
+            camera2.position.set(0, 0, 5);
+
+            renderer2 = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer2.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer2.domElement);
+
+            const ambient = new THREE.AmbientLight(0xffffff, 1.2);
+            scene2.add(ambient);
+
+            const dir = new THREE.DirectionalLight(0xffffff, 2);
+            dir.position.set(5, 5, 5);
+            scene2.add(dir);
+
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                "models/viking_helmet.glb",
+                (gltf) => {
+                    helmetModel = gltf.scene;
+
+                    const box = new THREE.Box3().setFromObject(helmetModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    helmetModel.position.sub(center);
+
+                    const size = box.getSize(new THREE.Vector3()).length();
+                    const scaleFactor = 2 / size;
+                    helmetModel.scale.setScalar(scaleFactor * 2.5);
+
+                    helmetModel.traverse((child) => {
+                        if (child.isMesh) {
+                            child.material = new THREE.MeshPhongMaterial({
+                                color: 0x00ffff,
+                                emissive: 0x00ffff,
+                                emissiveIntensity: 1.5,
+                                transparent: true,
+                                opacity: 0.35,
+                                shininess: 200
+                            });
+                        }
+                    });
+
+                    scene2.add(helmetModel);
+                    animateMenuHelmet();
+                },
+                undefined,
+                (error) => {
+                    console.error("GLB failed to load:", error);
+                }
+            );
+        }
+
+        function animateMenuHelmet() {
+            requestAnimationFrame(animateMenuHelmet);
+
+            if (helmetModel) {
+                helmetModel.rotation.y += 0.01;
+
+                helmetModel.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material.opacity = 0.25 + Math.sin(Date.now() * 0.003) * 0.1;
+                    }
+                });
+            }
+
+            renderer2.render(scene2, camera2);
+        }
+
+        window.addEventListener("load", initMenuHelmet);
+
+        function startLoading() {
+            const loader = document.getElementById("loading-screen");
+            const menu = document.getElementById("menu");
+
+            menu.style.opacity = "0";
+            menu.style.pointerEvents = "none";
+
+            setTimeout(() => {
+                loader.classList.add("visible");
+            }, 300);
+
+            let progress = 0;
+            const bar = document.getElementById("progress-bar");
+            const percent = document.getElementById("loading-percent");
+
+            const interval = setInterval(() => {
+                progress += 2;
+                bar.style.width = progress + "%";
+                percent.textContent = progress + "%";
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+
+                    loader.classList.remove("visible");
+                    loader.classList.add("fade-out");
+
+                    setTimeout(() => {
+                        window.location.href = "index.html";
+                    }, 900);
+                }
+            }, 40);
         }
     </script>
 
-    <script src="setup.js"></script>
-    <script src="build.js"></script>
-    <script src="animate.js"></script>
-    <script src="run.js"></script>
-
 </body>
+
+</html>
 
 </html>
