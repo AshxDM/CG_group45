@@ -117,11 +117,26 @@ function onClick(e) {
 
 renderer.domElement.addEventListener("pointerdown", onClick);
 
-document.getElementById("materialSelect").addEventListener("change", (e) => {
-  if (!selectedMesh) return;
-  const mat = materials[e.target.value].clone();
-  selectedMesh.material = mat;
-  originalMaterial = mat;
+const materialDropdown = document.getElementById("materialDropdown");
+const materialSelected = document.getElementById("materialSelected");
+const materialList = document.getElementById("materialList");
+
+materialSelected.addEventListener("click", () => {
+  materialList.style.display = materialList.style.display === "block" ? "none" : "block";
+});
+
+document.querySelectorAll(".mat-option").forEach(opt => {
+  opt.addEventListener("click", () => {
+    const matName = opt.getAttribute("data-mat");
+    materialSelected.textContent = opt.textContent.trim();
+    materialList.style.display = "none";
+
+    if (!selectedMesh) return;
+
+    const mat = materials[matName].clone();
+    selectedMesh.material = mat;
+    originalMaterial = mat;
+  });
 });
 
 document.getElementById("colorPicker").addEventListener("input", (e) => {
@@ -157,7 +172,7 @@ document.getElementById("resetBtn").addEventListener("click", () => {
     activeComponent = null;
   }
   deselectMesh();
-  document.getElementById("materialSelect").value = "default";
+  materialSelected.textContent = "Default";
   document.getElementById("colorPicker").value = "#ffffff";
   document.getElementById("componentSelect").value = "none";
 });
@@ -193,3 +208,4 @@ window.addEventListener("pointermove", (e) => {
   pivot.rotation.y += deltaX * 0.01;
   prevX = e.clientX;
 });
+
