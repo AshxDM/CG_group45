@@ -213,10 +213,5 @@ function enableHelmetRotation (helmet, domElement, sensitivity = 0.01) {
     prevX = e.clientX;
   });
 }
-window.addEventListener("pointermove", (e) => {
-  if (!isDragging) return;
-  const deltaX = e.clientX - prevX;
-  pivot.rotation.y += deltaX * 0.01;
-  prevX = e.clientX;
-});
+
 
