@@ -16,7 +16,10 @@ renderer.setSize(w, h);
 document.body.appendChild(renderer.domElement);
 
 controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
+controls.enableRotate = false;
+controls.enablePan = false;
+controls.enableZoom = true;
+
 
 //Load the background and lighting
 const hdrLoader = new HDRLoader();
@@ -29,6 +32,7 @@ hdrLoader.load('./background/monochrome_studio_02_4k.hdr', (texture) => {
 //Load the model, I will make it into the function later to load multiple models
 const gltfLoader = new GLTFLoader();
 const helmetGlb = await gltfLoader.loadAsync('./models/MCHelmet.glb');
+console.log(helmetGlb);
 const helmet = helmetGlb.scene;
 helmet.traverse((child) => {
     if (child.isMesh) {
@@ -50,3 +54,32 @@ function handleWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 window.addEventListener('resize', handleWindowResize, false);
+
+
+//Only rotate the helmet, not the background
+let isDragging = false;
+let prevX = 0, prevY = 0;
+const SENSITIVITY = 0.01;
+
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  isDragging = true;
+  prevX = e.clientX;
+  prevY = e.clientY;
+})
+
+window.addEventListener('pointerup', () => {
+  isDragging = false;
+})
+
+window.addEventListener('pointermove', (e) => {
+  if (!isDragging || !helmet) return;
+
+  const deltaX = e.clientX - prevX; 
+  console.log('deltaX:', deltaX);
+  const deltaY = e.clientY - prevY;
+
+  helmet.rotation.y += deltaX * SENSITIVITY;
+  
+  prevX = e.clientX;
+  prevY = e.clientY;
+})
