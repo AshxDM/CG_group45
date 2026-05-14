@@ -31,22 +31,37 @@
         <div id="materialDropdown" class="dropdown">
             <div id="materialSelected" class="dropdown-selected">Default</div>
             <div id="materialList" class="dropdown-list">
-                <div class="mat-option" data-mat="default"><span class="mat-icon"
-                        style="background:#ffffff"></span>Default</div>
-                <div class="mat-option" data-mat="metal"><span class="mat-icon" style="background:#aaaaaa"></span>Metal
+
+                <div class="mat-option" data-mat="metal">
+                    <img class="mat-thumb" src="materials/metal.jpg">
+                    Metal
                 </div>
-                <div class="mat-option" data-mat="hologram"><span class="mat-icon"
-                        style="background:#00ffff"></span>Hologram</div>
-                <div class="mat-option" data-mat="matte"><span class="mat-icon" style="background:#555555"></span>Matte
+
+                <div class="mat-option" data-mat="gold">
+                    <img class="mat-thumb" src="materials/gold.jpg">
+                    Gold
                 </div>
-                <div class="mat-option" data-mat="gold"><span class="mat-icon" style="background:#ffd700"></span>Gold
+
+                <div class="mat-option" data-mat="chrome">
+                    <img class="mat-thumb" src="materials/chrome.jpg">
+                    Chrome
                 </div>
-                <div class="mat-option" data-mat="chrome"><span class="mat-icon"
-                        style="background:#e6e6e6"></span>Chrome</div>
-                <div class="mat-option" data-mat="carbon"><span class="mat-icon"
-                        style="background:#222222"></span>Carbon</div>
-                <div class="mat-option" data-mat="rust"><span class="mat-icon" style="background:#8b3e2f"></span>Rusted
+
+                <div class="mat-option" data-mat="carbon">
+                    <img class="mat-thumb" src="materials/carbon.jpg">
+                    Carbon Fiber
                 </div>
+
+                <div class="mat-option" data-mat="matte">
+                    <img class="mat-thumb" src="materials/matte.jpg">
+                    Matte
+                </div>
+
+                <div class="mat-option" data-mat="hologram">
+                    <img class="mat-thumb" src="materials/hologram.jpg">
+                    Hologram
+                </div>
+
             </div>
         </div>
 
@@ -68,7 +83,7 @@
         <label>Rotate Z</label>
         <input type="range" id="rotZ" min="-180" max="180" step="1" value="0">
 
-        <label>Add Component</label>
+        <label>Extra Component</label>
         <select id="componentSelect">
             <option value="none">None</option>
             <option value="horns">Horns</option>
