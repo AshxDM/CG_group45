@@ -33,12 +33,16 @@ hdrLoader.load('./background/monochrome_studio_02_4k.hdr', (texture) => {
 const gltfLoader = new GLTFLoader();
 const helmetGlb = await gltfLoader.loadAsync('./models/MCHelmet.glb');
 const helmet = helmetGlb.scene;
-helmet.traverse((child) => {
-    if (child.isMesh) {
-        child.geometry.center();
-    }
-})
-scene.add(helmet);
+
+//put every parts of the helmet into a box
+const box = new THREE.Box3().setFromObject(helmet);
+const center = box.getCenter(new THREE.Vector3());
+
+//use pivot for better rotation
+const pivot = new THREE.Group();
+helmet.position.sub(center);
+pivot.add(helmet);
+scene.add(pivot);
 
 function animate() {
     requestAnimationFrame(animate);
@@ -76,7 +80,7 @@ window.addEventListener('pointermove', (e) => {
   const deltaX = e.clientX - prevX; 
   const deltaY = e.clientY - prevY;
 
-  helmet.rotation.y += deltaX * SENSITIVITY;
+  pivot.rotation.y += deltaX * SENSITIVITY;
   
   prevX = e.clientX;
   prevY = e.clientY;
