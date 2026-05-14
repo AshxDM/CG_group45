@@ -278,3 +278,47 @@ h1 {
     background-color: #ffcc33;
     box-shadow: 0 0 15px rgba(255, 200, 0, 0.5);
 }
+
+.dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown-selected {
+    padding: 8px;
+    background: #001f2f;
+    border: 1px solid #00ffff;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.dropdown-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #001f2f;
+    border: 1px solid #00ffff;
+    border-radius: 6px;
+    display: none;
+    z-index: 10;
+}
+
+.mat-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.mat-option:hover {
+    background: rgba(0, 255, 255, 0.2);
+}
+
+.mat-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: inline-block;
+}

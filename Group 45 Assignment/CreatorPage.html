@@ -73,16 +73,27 @@
         <div id="selectedPartLabel">No part selected</div>
 
         <label>Material</label>
-        <select id="materialSelect">
-            <option value="default">Default</option>
-            <option value="metal">Metal</option>
-            <option value="hologram">Hologram</option>
-            <option value="matte">Matte</option>
-            <option value="gold">Gold</option>
-            <option value="chrome">Chrome</option>
-            <option value="carbon">Carbon Fiber</option>
-            <option value="rust">Rusted</option>
-        </select>
+        <div id="materialDropdown" class="dropdown">
+            <div id="materialSelected" class="dropdown-selected">Default</div>
+            <div id="materialList" class="dropdown-list">
+                <div class="mat-option" data-mat="default"><span class="mat-icon"
+                        style="background:#ffffff"></span>Default</div>
+                <div class="mat-option" data-mat="metal"><span class="mat-icon" style="background:#aaaaaa"></span>Metal
+                </div>
+                <div class="mat-option" data-mat="hologram"><span class="mat-icon"
+                        style="background:#00ffff"></span>Hologram</div>
+                <div class="mat-option" data-mat="matte"><span class="mat-icon" style="background:#555555"></span>Matte
+                </div>
+                <div class="mat-option" data-mat="gold"><span class="mat-icon" style="background:#ffd700"></span>Gold
+                </div>
+                <div class="mat-option" data-mat="chrome"><span class="mat-icon"
+                        style="background:#e6e6e6"></span>Chrome</div>
+                <div class="mat-option" data-mat="carbon"><span class="mat-icon"
+                        style="background:#222222"></span>Carbon</div>
+                <div class="mat-option" data-mat="rust"><span class="mat-icon" style="background:#8b3e2f"></span>Rusted
+                </div>
+            </div>
+        </div>
 
         <label>Color Overlay</label>
         <input type="color" id="colorPicker" value="#ffffff">
@@ -98,6 +109,7 @@
 
         <button id="resetBtn">Reset to Default</button>
     </div>
+
 
     <script type="module" src="build.js"></script>
 
