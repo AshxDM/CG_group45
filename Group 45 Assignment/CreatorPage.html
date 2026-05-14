@@ -19,57 +19,12 @@
     <link rel="stylesheet" href="css/layout.css">
 
     <title>The Helmet Forge</title>
-
-    <style>
-        #ui-panel {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid #00ffff;
-            padding: 20px;
-            border-radius: 10px;
-            font-family: 'Orbitron', sans-serif;
-            color: #00ffff;
-            width: 260px;
-            backdrop-filter: blur(6px);
-        }
-
-        select,
-        input[type="color"],
-        button {
-            width: 100%;
-            padding: 8px;
-            margin-top: 10px;
-            background: #001f2f;
-            color: #00ffff;
-            border: 1px solid #00ffff;
-            border-radius: 6px;
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        #resetBtn {
-            background: #ff0044;
-            color: white;
-        }
-
-        label {
-            margin-top: 15px;
-            display: block;
-            font-size: 14px;
-        }
-
-        #selectedPartLabel {
-            margin-top: 10px;
-            font-size: 14px;
-            opacity: 0.8;
-        }
-    </style>
 </head>
 
 <body>
 
     <div id="ui-panel">
+
         <div id="selectedPartLabel">No part selected</div>
 
         <label>Material</label>
@@ -98,7 +53,22 @@
         <label>Color Overlay</label>
         <input type="color" id="colorPicker" value="#ffffff">
 
-        <label>Extra Component</label>
+        <label>Scale Length (X)</label>
+        <input type="range" id="scaleX" min="0.1" max="3" step="0.01" value="1">
+
+        <label>Scale Width (Y)</label>
+        <input type="range" id="scaleY" min="0.1" max="3" step="0.01" value="1">
+
+        <label>Rotate X</label>
+        <input type="range" id="rotX" min="-180" max="180" step="1" value="0">
+
+        <label>Rotate Y</label>
+        <input type="range" id="rotY" min="-180" max="180" step="1" value="0">
+
+        <label>Rotate Z</label>
+        <input type="range" id="rotZ" min="-180" max="180" step="1" value="0">
+
+        <label>Add Component</label>
         <select id="componentSelect">
             <option value="none">None</option>
             <option value="horns">Horns</option>
@@ -109,7 +79,6 @@
 
         <button id="resetBtn">Reset to Default</button>
     </div>
-
 
     <script type="module" src="build.js"></script>
 

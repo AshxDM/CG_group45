@@ -1,3 +1,4 @@
+/* GLOBAL */
 body {
     margin: 0;
     height: 100vh;
@@ -8,8 +9,7 @@ body {
     font-family: "Orbitron", sans-serif;
 }
 
-
-
+/* MENU */
 #menu {
     display: flex;
     flex-direction: column;
@@ -44,8 +44,7 @@ button:hover {
     transform: scale(1.05);
 }
 
-
-
+/* LOADING SCREEN */
 #loading-screen {
     position: fixed;
     top: 0;
@@ -109,8 +108,7 @@ button:hover {
     letter-spacing: 3px;
 }
 
-
-
+/* MAIN CONTAINER */
 #main-container {
     display: flex;
     flex-direction: column;
@@ -131,9 +129,12 @@ h1 {
     margin: 5px 0;
 }
 
+/* SAVE SLOTS */
 #save-slots {
     margin-top: 40px;
     text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    color: #00ffff;
 }
 
 #save-slots h2 {
@@ -141,51 +142,6 @@ h1 {
     font-size: 32px;
     letter-spacing: 3px;
     margin-bottom: 25px;
-}
-
-.slot-row {
-    display: flex;
-    gap: 25px;
-    justify-content: center;
-}
-
-.slot-box {
-    background-color: rgba(0, 255, 255, 0.1);
-    border: 1px solid #00ffff;
-    border-radius: 10px;
-    padding: 25px;
-    width: 260px;
-    height: 180px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-}
-
-.slot-box:hover {
-    transform: scale(1.08);
-    background: rgba(30, 144, 255, 0.3);
-    box-shadow: 0 0 25px rgba(102, 204, 255, 0.8);
-}
-
-#slot-message {
-    margin-top: 20px;
-    font-size: 20px;
-    letter-spacing: 2px;
-}
-
-#helmet-preview {
-    width: 260px;
-    height: 260px;
-    margin-bottom: 20px;
-}
-
-#save-slots {
-    text-align: center;
-    font-family: 'Orbitron', sans-serif;
-    color: #00ffff;
 }
 
 .slot-row {
@@ -279,6 +235,59 @@ h1 {
     box-shadow: 0 0 15px rgba(255, 200, 0, 0.5);
 }
 
+/* CREATOR UI PANEL */
+#ui-panel {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid #00ffff;
+    padding: 20px;
+    border-radius: 10px;
+    font-family: 'Orbitron', sans-serif;
+    color: #00ffff;
+    width: 260px;
+    backdrop-filter: blur(6px);
+}
+
+#ui-panel label {
+    margin-top: 15px;
+    display: block;
+    font-size: 14px;
+}
+
+#selectedPartLabel {
+    margin-top: 10px;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* INPUTS */
+select,
+input[type="color"],
+input[type="range"],
+button {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    background: #001f2f;
+    color: #00ffff;
+    border: 1px solid #00ffff;
+    border-radius: 6px;
+    font-family: 'Orbitron', sans-serif;
+}
+
+/* RESET BUTTON */
+#resetBtn {
+    background: #ff0044;
+    color: white;
+}
+
+#resetBtn:hover {
+    background: #ff3366;
+}
+
+/* MATERIAL DROPDOWN */
 .dropdown {
     position: relative;
     width: 100%;

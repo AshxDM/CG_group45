@@ -8,6 +8,7 @@ let selectedMesh = null;
 let originalMaterial = null;
 let activeComponent = null;
 let defaultMaterials = {};
+let defaultTransforms = {};
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -43,7 +44,13 @@ const helmetGlb = await gltfLoader.loadAsync("./models/MCHelmet.glb");
 helmet = helmetGlb.scene;
 
 helmet.traverse((child) => {
-  if (child.isMesh) defaultMaterials[child.uuid] = child.material.clone();
+  if (child.isMesh) {
+    defaultMaterials[child.uuid] = child.material.clone();
+    defaultTransforms[child.uuid] = {
+      scale: child.scale.clone(),
+      rotation: child.rotation.clone()
+    };
+  }
 });
 
 const box = new THREE.Box3().setFromObject(helmet);
@@ -62,6 +69,7 @@ const highlightMaterial = new THREE.MeshStandardMaterial({
   roughness: 0.3
 });
 
+// Material Options
 const materials = {
   default: new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.5, roughness: 0.4 }),
   metal: new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 1, roughness: 0.2 }),
@@ -80,6 +88,8 @@ const materials = {
   rust: new THREE.MeshStandardMaterial({ color: 0x8b3e2f, metalness: 0.1, roughness: 1 })
 };
 
+
+// Add Components/Parts
 const components = {
   horns: "./models/Horns.glb",
   crest: "./models/Crest.glb",
@@ -92,7 +102,15 @@ function selectMesh(mesh) {
   selectedMesh = mesh;
   originalMaterial = mesh.material;
   mesh.material = highlightMaterial;
+
   document.getElementById("selectedPartLabel").textContent = mesh.name;
+
+  scaleX.value = mesh.scale.x;
+  scaleY.value = mesh.scale.y;
+
+  rotX.value = THREE.MathUtils.radToDeg(mesh.rotation.x);
+  rotY.value = THREE.MathUtils.radToDeg(mesh.rotation.y);
+  rotZ.value = THREE.MathUtils.radToDeg(mesh.rotation.z);
 }
 
 function deselectMesh() {
@@ -100,7 +118,15 @@ function deselectMesh() {
   selectedMesh.material = originalMaterial;
   selectedMesh = null;
   originalMaterial = null;
+
   document.getElementById("selectedPartLabel").textContent = "No part selected";
+
+  scaleX.value = 1;
+  scaleY.value = 1;
+
+  rotX.value = 0;
+  rotY.value = 0;
+  rotZ.value = 0;
 }
 
 function onClick(e) {
@@ -117,7 +143,6 @@ function onClick(e) {
 
 renderer.domElement.addEventListener("pointerdown", onClick);
 
-const materialDropdown = document.getElementById("materialDropdown");
 const materialSelected = document.getElementById("materialSelected");
 const materialList = document.getElementById("materialList");
 
@@ -149,6 +174,38 @@ document.getElementById("colorPicker").addEventListener("input", (e) => {
   mat.needsUpdate = true;
 });
 
+const scaleX = document.getElementById("scaleX");
+const scaleY = document.getElementById("scaleY");
+
+scaleX.addEventListener("input", () => {
+  if (!selectedMesh) return;
+  selectedMesh.scale.x = parseFloat(scaleX.value);
+});
+
+scaleY.addEventListener("input", () => {
+  if (!selectedMesh) return;
+  selectedMesh.scale.y = parseFloat(scaleY.value);
+});
+
+const rotX = document.getElementById("rotX");
+const rotY = document.getElementById("rotY");
+const rotZ = document.getElementById("rotZ");
+
+rotX.addEventListener("input", () => {
+  if (!selectedMesh) return;
+  selectedMesh.rotation.x = THREE.MathUtils.degToRad(rotX.value);
+});
+
+rotY.addEventListener("input", () => {
+  if (!selectedMesh) return;
+  selectedMesh.rotation.y = THREE.MathUtils.degToRad(rotY.value);
+});
+
+rotZ.addEventListener("input", () => {
+  if (!selectedMesh) return;
+  selectedMesh.rotation.z = THREE.MathUtils.degToRad(rotZ.value);
+});
+
 document.getElementById("componentSelect").addEventListener("change", async (e) => {
   if (activeComponent) {
     pivot.remove(activeComponent);
@@ -165,13 +222,20 @@ document.getElementById("componentSelect").addEventListener("change", async (e) 
 
 document.getElementById("resetBtn").addEventListener("click", () => {
   helmet.traverse((child) => {
-    if (child.isMesh) child.material = defaultMaterials[child.uuid].clone();
+    if (child.isMesh) {
+      child.material = defaultMaterials[child.uuid].clone();
+      child.scale.copy(defaultTransforms[child.uuid].scale);
+      child.rotation.copy(defaultTransforms[child.uuid].rotation);
+    }
   });
+
   if (activeComponent) {
     pivot.remove(activeComponent);
     activeComponent = null;
   }
+
   deselectMesh();
+
   materialSelected.textContent = "Default";
   document.getElementById("colorPicker").value = "#ffffff";
   document.getElementById("componentSelect").value = "none";
@@ -208,4 +272,6 @@ window.addEventListener("pointermove", (e) => {
   pivot.rotation.y += deltaX * 0.01;
   prevX = e.clientX;
 });
+
+
 
