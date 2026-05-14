@@ -181,3 +181,100 @@ h1 {
     height: 260px;
     margin-bottom: 20px;
 }
+
+#save-slots {
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    color: #00ffff;
+}
+
+.slot-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 40px;
+    margin-top: 30px;
+}
+
+.slot-box {
+    background-color: rgba(0, 255, 255, 0.1);
+    border: 1px solid #00ffff;
+    border-radius: 10px;
+    padding: 25px;
+    width: 260px;
+    height: 180px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+    transition: 0.3s;
+}
+
+.slot-box:hover {
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+}
+
+.create-btn,
+.delete-btn {
+    margin: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Orbitron', sans-serif;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.create-btn {
+    background-color: #00aaff;
+    color: #fff;
+}
+
+.delete-btn {
+    background-color: #ff0044;
+    color: #fff;
+}
+
+.create-btn:hover {
+    background-color: #00ccff;
+}
+
+.delete-btn:hover {
+    background-color: #ff3366;
+}
+
+.slot-controls {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+#add-slot-btn,
+#undo-slot-btn {
+    padding: 10px 20px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    background-color: #00aaff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#undo-slot-btn {
+    background-color: #ffaa00;
+}
+
+#add-slot-btn:hover {
+    background-color: #00ccff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+#undo-slot-btn:hover {
+    background-color: #ffcc33;
+    box-shadow: 0 0 15px rgba(255, 200, 0, 0.5);
+}
