@@ -330,3 +330,24 @@ button {
     border-radius: 50%;
     display: inline-block;
 }
+
+.mat-thumb {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid #00ffff;
+    box-shadow: 0 0 6px rgba(0, 255, 255, 0.4);
+}
+
+.mat-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.mat-option:hover {
+    background: rgba(0, 255, 255, 0.2);
+}
