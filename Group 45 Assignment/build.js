@@ -1,52 +1,52 @@
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x222222);
+import * as THREE from "three";
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 
-const camera = new THREE.PerspectiveCamera(
-  60,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
+let camera, scene, renderer, controls;
 
-camera.position.set(0, 1.5, 5);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+const w = window.innerWidth;
+const h = window.innerHeight;
+camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+camera.position.set(10, 0, 0);
+camera.lookAt(0,0,0);
+scene = new THREE.Scene();
+renderer = new THREE.WebGLRenderer({antialias: true});
+renderer.setSize(w, h);
 document.body.appendChild(renderer.domElement);
 
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
-const ambient = new THREE.AmbientLight(0xffffff, 1.5);
-scene.add(ambient);
+//Load the background and lighting
+const hdrLoader = new HDRLoader();
+hdrLoader.load('./background/monochrome_studio_02_4k.hdr', (texture) => {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    scene.environment = texture;
+    scene.background = texture;
+})
 
-const light = new THREE.DirectionalLight(0xffffff, 2);
-light.position.set(5, 5, 5);
-scene.add(light);
-
-const loader = new THREE.GLTFLoader();
-
-loader.load(
-  "models/MCHelmet.glb",
-  function (gltf) {
-    const helmet = gltf.scene;
-    scene.add(helmet);
-
-    helmet.position.set(0, 0, 0);
-    helmet.scale.set(1, 1, 1);
-
-    console.log("Helmet loaded:", helmet);
-  },
-  undefined,
-  function (error) {
-    console.error("Model failed to load:", error);
-  }
-);
+//Load the model, I will make it into the function later to load multiple models
+const gltfLoader = new GLTFLoader();
+const helmetGlb = await gltfLoader.loadAsync('./models/MCHelmet.glb');
+const helmet = helmetGlb.scene;
+helmet.traverse((child) => {
+    if (child.isMesh) {
+        child.geometry.center();
+    }
+})
+scene.add(helmet);
 
 function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+    controls.update();
 }
-
 animate();
+
+function handleWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+window.addEventListener('resize', handleWindowResize, false);
