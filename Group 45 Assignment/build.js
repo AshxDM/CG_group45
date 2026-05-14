@@ -32,7 +32,6 @@ hdrLoader.load('./background/monochrome_studio_02_4k.hdr', (texture) => {
 //Load the model, I will make it into the function later to load multiple models
 const gltfLoader = new GLTFLoader();
 const helmetGlb = await gltfLoader.loadAsync('./models/MCHelmet.glb');
-console.log(helmetGlb);
 const helmet = helmetGlb.scene;
 helmet.traverse((child) => {
     if (child.isMesh) {
@@ -75,7 +74,6 @@ window.addEventListener('pointermove', (e) => {
   if (!isDragging || !helmet) return;
 
   const deltaX = e.clientX - prevX; 
-  console.log('deltaX:', deltaX);
   const deltaY = e.clientY - prevY;
 
   helmet.rotation.y += deltaX * SENSITIVITY;
