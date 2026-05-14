@@ -53,6 +53,7 @@ pivot = new THREE.Group();
 helmet.position.sub(center);
 pivot.add(helmet);
 scene.add(pivot);
+enableHelmetRotation(helmet, renderer.domElement);
 
 const highlightMaterial = new THREE.MeshStandardMaterial({
   color: 0x00ffff,
@@ -175,21 +176,25 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-let isDragging = false;
-let prevX = 0;
 
-renderer.domElement.addEventListener("pointerdown", (e) => {
-  isDragging = true;
-  prevX = e.clientX;
-});
 
-window.addEventListener("pointerup", () => {
-  isDragging = false;
-});
+function enableHelmetRotation (helmet, domElement, sensitivity = 0.01) {
+  let isDragging = false;
+  let prevX = 0;
 
-window.addEventListener("pointermove", (e) => {
-  if (!isDragging) return;
-  const deltaX = e.clientX - prevX;
-  pivot.rotation.y += deltaX * 0.01;
-  prevX = e.clientX;
-});
+  renderer.domElement.addEventListener("pointerdown", (e) => {
+    isDragging = true;
+    prevX = e.clientX;
+  });
+
+  window.addEventListener("pointerup", () => {
+    isDragging = false;
+  });
+
+  window.addEventListener("pointermove", (e) => {
+    if (!isDragging) return;
+    const deltaX = e.clientX - prevX;
+    pivot.rotation.y += deltaX * sensitivity;
+    prevX = e.clientX;
+  });
+}
