@@ -35,6 +35,7 @@ const helmetGlb = await gltfLoader.loadAsync('./models/MCHelmet.glb');
 const helmet = helmetGlb.scene;
 
 scene.add(helmet);
+enableHelmetRotation(helmet, renderer.domElement)
 
 function animate() {
     requestAnimationFrame(animate);
@@ -50,30 +51,27 @@ function handleWindowResize() {
 }
 window.addEventListener('resize', handleWindowResize, false);
 
-
 //Only rotate the helmet, not the background
-let isDragging = false;
-let prevX = 0, prevY = 0;
-const SENSITIVITY = 0.01;
+function enableHelmetRotation (helmet, domElement, sensitivity = 0.01) {
+  let isDragging = false;
+  let prevX = 0;
 
-renderer.domElement.addEventListener('pointerdown', (e) => {
-  isDragging = true;
-  prevX = e.clientX;
-  prevY = e.clientY;
-})
+  renderer.domElement.addEventListener('pointerdown', (e) => {
+    isDragging = true;
+    prevX = e.clientX;
+  })
 
-window.addEventListener('pointerup', () => {
-  isDragging = false;
-})
+  window.addEventListener('pointerup', () => {
+    isDragging = false;
+  })
 
-window.addEventListener('pointermove', (e) => {
-  if (!isDragging || !helmet) return;
+  window.addEventListener('pointermove', (e) => {
+    if (!isDragging || !helmet) return;
 
-  const deltaX = e.clientX - prevX; 
-  const deltaY = e.clientY - prevY;
+    const deltaX = e.clientX - prevX; 
 
-  helmet.rotation.y += deltaX * SENSITIVITY;
-  
-  prevX = e.clientX;
-  prevY = e.clientY;
-})
+    helmet.rotation.y += deltaX * sensitivity;
+    
+    prevX = e.clientX;
+  })
+}
