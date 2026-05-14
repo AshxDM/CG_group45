@@ -1,4 +1,3 @@
-/* GLOBAL */
 body {
     margin: 0;
     height: 100vh;
@@ -108,7 +107,7 @@ button:hover {
     letter-spacing: 3px;
 }
 
-/* MAIN CONTAINER */
+
 #main-container {
     display: flex;
     flex-direction: column;
@@ -262,7 +261,7 @@ h1 {
     opacity: 0.8;
 }
 
-/* INPUTS */
+
 select,
 input[type="color"],
 input[type="range"],
@@ -277,7 +276,7 @@ button {
     font-family: 'Orbitron', sans-serif;
 }
 
-/* RESET BUTTON */
+
 #resetBtn {
     background: #ff0044;
     color: white;
@@ -287,7 +286,7 @@ button {
     background: #ff3366;
 }
 
-/* MATERIAL DROPDOWN */
+
 .dropdown {
     position: relative;
     width: 100%;
