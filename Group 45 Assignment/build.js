@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
+import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 
 let camera, scene, renderer, controls, helmet, pivot;
 let selectedMesh = null;
@@ -30,7 +30,7 @@ controls.enableRotate = false;
 controls.enablePan = false;
 controls.enableZoom = true;
 
-new RGBELoader()
+new HDRLoader()
   .setPath("./background/")
   .load("monochrome_studio_02_4k.hdr", (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
