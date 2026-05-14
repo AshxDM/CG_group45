@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
+import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 
 let camera, scene, renderer, controls, helmet, pivot;
 let selectedMesh = null;
@@ -31,19 +31,56 @@ controls.enableRotate = false;
 controls.enablePan = false;
 controls.enableZoom = true;
 
-new HDRLoader()
+new RGBELoader()
   .setPath("./background/")
-  .load("monochrome_studio_02_4k.hdr", (texture) => {
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    scene.environment = texture;
-    scene.background = texture;
+  .load("monochrome_studio_02_4k.hdr", t => {
+    t.mapping = THREE.EquirectangularReflectionMapping;
+    scene.environment = t;
+    scene.background = t;
   });
+
+const textureLoader = new THREE.TextureLoader();
+
+const carbonTexture = textureLoader.load("./materials/carbon.jpg", t => {
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(4, 4);
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+});
+
+const materials = {
+  default: new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.5, roughness: 0.4 }),
+  metal: new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 1, roughness: 0.2 }),
+  matte: new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.1, roughness: 0.9 }),
+  hologram: new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    emissive: 0xffffff,
+    emissiveIntensity: 0.8,
+    transparent: true,
+    opacity: 0.5,
+    shininess: 150
+  }),
+  gold: new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 1, roughness: 0.2 }),
+  chrome: new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0 }),
+  carbon: new THREE.MeshStandardMaterial({
+    map: carbonTexture,
+    metalness: 0.4,
+    roughness: 0.6
+  })
+};
+
+const components = {
+  horns: "./models/Horns.glb",
+  crest: "./models/Crest.glb",
+  visor: "./models/Visor.glb",
+  spikes: "./models/Spikes.glb"
+};
 
 const gltfLoader = new GLTFLoader();
 const helmetGlb = await gltfLoader.loadAsync("./models/MCHelmet.glb");
 helmet = helmetGlb.scene;
 
-helmet.traverse((child) => {
+helmet.traverse(child => {
   if (child.isMesh) {
     defaultMaterials[child.uuid] = child.material.clone();
     defaultTransforms[child.uuid] = {
@@ -60,7 +97,6 @@ pivot = new THREE.Group();
 helmet.position.sub(center);
 pivot.add(helmet);
 scene.add(pivot);
-enableHelmetRotation(helmet, renderer.domElement);
 
 const highlightMaterial = new THREE.MeshStandardMaterial({
   color: 0x00ffff,
@@ -69,34 +105,6 @@ const highlightMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.2,
   roughness: 0.3
 });
-
-// Material Options
-const materials = {
-  default: new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.5, roughness: 0.4 }),
-  metal: new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 1, roughness: 0.2 }),
-  matte: new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.1, roughness: 0.9 }),
-  hologram: new THREE.MeshPhongMaterial({
-    color: 0xffffff,
-    emissive: 0xffffff,
-    emissiveIntensity: 0.8,
-    transparent: true,
-    opacity: 0.5,
-    shininess: 150
-  }),
-  gold: new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 1, roughness: 0.2 }),
-  chrome: new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0 }),
-  carbon: new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.3 }),
-  rust: new THREE.MeshStandardMaterial({ color: 0x8b3e2f, metalness: 0.1, roughness: 1 })
-};
-
-
-// Add Components/Parts
-const components = {
-  horns: "./models/Horns.glb",
-  crest: "./models/Crest.glb",
-  visor: "./models/Visor.glb",
-  spikes: "./models/Spikes.glb"
-};
 
 function selectMesh(mesh) {
   if (selectedMesh) selectedMesh.material = originalMaterial;
@@ -160,12 +168,13 @@ document.querySelectorAll(".mat-option").forEach(opt => {
     if (!selectedMesh) return;
 
     const mat = materials[matName].clone();
+    mat.needsUpdate = true;
     selectedMesh.material = mat;
     originalMaterial = mat;
   });
 });
 
-document.getElementById("colorPicker").addEventListener("input", (e) => {
+document.getElementById("colorPicker").addEventListener("input", e => {
   if (!selectedMesh) return;
   const color = new THREE.Color(e.target.value);
   const mat = selectedMesh.material;
@@ -207,7 +216,7 @@ rotZ.addEventListener("input", () => {
   selectedMesh.rotation.z = THREE.MathUtils.degToRad(rotZ.value);
 });
 
-document.getElementById("componentSelect").addEventListener("change", async (e) => {
+document.getElementById("componentSelect").addEventListener("change", async e => {
   if (activeComponent) {
     pivot.remove(activeComponent);
     activeComponent = null;
@@ -222,7 +231,7 @@ document.getElementById("componentSelect").addEventListener("change", async (e) 
 });
 
 document.getElementById("resetBtn").addEventListener("click", () => {
-  helmet.traverse((child) => {
+  helmet.traverse(child => {
     if (child.isMesh) {
       child.material = defaultMaterials[child.uuid].clone();
       child.scale.copy(defaultTransforms[child.uuid].scale);
@@ -255,28 +264,26 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+let isDragging = false;
+let prevX = 0;
+
+renderer.domElement.addEventListener("pointerdown", e => {
+  isDragging = true;
+  prevX = e.clientX;
+});
+
+window.addEventListener("pointerup", () => {
+  isDragging = false;
+});
+
+window.addEventListener("pointermove", e => {
+  if (!isDragging) return;
+  const deltaX = e.clientX - prevX;
+  pivot.rotation.y += deltaX * 0.01;
+  prevX = e.clientX;
+});
 
 
-function enableHelmetRotation (helmet, domElement, sensitivity = 0.01) {
-  let isDragging = false;
-  let prevX = 0;
-
-  renderer.domElement.addEventListener("pointerdown", (e) => {
-    isDragging = true;
-    prevX = e.clientX;
-  });
-
-  window.addEventListener("pointerup", () => {
-    isDragging = false;
-  });
-
-  window.addEventListener("pointermove", (e) => {
-    if (!isDragging) return;
-    const deltaX = e.clientX - prevX;
-    pivot.rotation.y += deltaX * sensitivity;
-    prevX = e.clientX;
-  });
-}
 
 
 
