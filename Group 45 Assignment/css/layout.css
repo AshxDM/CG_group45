@@ -278,3 +278,102 @@ h1 {
     background-color: #ffcc33;
     box-shadow: 0 0 15px rgba(255, 200, 0, 0.5);
 }
+
+#ui-panel {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid #00ffff;
+    padding: 20px;
+    border-radius: 10px;
+    font-family: 'Orbitron', sans-serif;
+    color: #00ffff;
+    width: 260px;
+    backdrop-filter: blur(6px);
+}
+
+select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    background: #001f2f;
+    color: #00ffff;
+    border: 1px solid #00ffff;
+    border-radius: 6px;
+    font-family: 'Orbitron', sans-serif;
+}
+
+label {
+    margin-top: 15px;
+    display: block;
+    font-size: 14px;
+}
+
+#ui-panel {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid #00ffff;
+    padding: 20px;
+    border-radius: 10px;
+    font-family: 'Orbitron', sans-serif;
+    color: #00ffff;
+    width: 260px;
+    backdrop-filter: blur(6px);
+}
+
+select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    background: #001f2f;
+    color: #00ffff;
+    border: 1px solid #00ffff;
+    border-radius: 6px;
+    font-family: 'Orbitron', sans-serif;
+}
+
+#selectedPartLabel {
+    margin-top: 10px;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+        #ui-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            color: #00ffff;
+            width: 260px;
+            backdrop-filter: blur(6px);
+        }
+
+        select, input[type="color"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            background: #001f2f;
+            color: #00ffff;
+            border: 1px solid #00ffff;
+            border-radius: 6px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        label {
+            margin-top: 15px;
+            display: block;
+            font-size: 14px;
+        }
+
+        #selectedPartLabel {
+            margin-top: 10px;
+            font-size: 14px;
+            opacity: 0.8;
+        }

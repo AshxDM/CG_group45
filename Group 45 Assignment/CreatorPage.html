@@ -6,56 +6,65 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
     <script type="importmap">
     {
-    "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@v0.184.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.184.0/examples/jsm/"
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"
+        }
     }
-    }
-</script>
+    </script>
 
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
-
-
     <link rel="stylesheet" href="css/layout.css">
 
     <title>The Helmet Forge</title>
+
+
 </head>
 
 <body>
 
+    <div id="ui-panel">
+        <div id="selectedPartLabel">No part selected</div>
 
-    <!-- <div id="welcome">
-        <h1>THE HELMET FORGE</h1>
-        <p>Craft, customise, and explore legendary helmets in 3D.</p>
-        <p>Use your mouse to rotate, zoom, and inspect your creation.</p>
-    </div> -->
+        <label>Material</label>
+        <select id="materialSelect">
+            <option value="default">Default</option>
+            <option value="metal">Metal</option>
+            <option value="hologram">Hologram</option>
+            <option value="matte">Matte</option>
+            <option value="gold">Gold</option>
+            <option value="chrome">Chrome</option>
+            <option value="carbon">Carbon Fiber</option>
+            <option value="rust">Rusted</option>
+        </select>
 
+        <label>Color Overlay</label>
+        <input type="color" id="colorPicker" value="#ffffff">
 
+        <label>Extra Component</label>
+        <select id="componentSelect">
+            <option value="none">None</option>
+            <option value="horns">Horns</option>
+            <option value="crest">Crest</option>
+            <option value="visor">Visor</option>
+            <option value="spikes">Spikes</option>
+        </select>
 
-    <script type='x-shader/x-vertex' id='vertexShader'>
-        attribute float alpha;
-        varying float vAlpha;
-        void main() {
-            vAlpha = alpha;
-            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = 2.0;
-            gl_Position = projectionMatrix * mvPosition;
-        }
-    </script>
+        <button id="resetBtn" style="
+    width:100%;
+    margin-top:15px;
+    padding:10px;
+    background:#ff0044;
+    color:white;
+    border:none;
+    border-radius:6px;
+    font-family:'Orbitron',sans-serif;
+">Reset to Default</button>
 
-    <script type='x-shader/x-fragment' id='fragmentShader'>
-        uniform vec3 color;
-        varying float vAlpha;
-        void main() {
-            gl_FragColor = vec4(color, vAlpha);
-        }
-    </script>
+    </div>
 
-
-    <!-- Your scripts -->
     <script type="module" src="build.js"></script>
 
 </body>
