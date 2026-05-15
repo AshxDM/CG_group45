@@ -8,8 +8,15 @@
     <link rel="stylesheet" href="css/layout.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"
+        }
+    }
+    </script>
 </head>
 
 <body>
@@ -29,35 +36,39 @@
         <button onclick="startLoading()">Enter</button>
     </div>
 
-    <script>
-        let scene2, camera2, renderer2, helmetModel;
+    <script type="module">
+        import * as THREE from "three";
+        import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+        let scene, camera, renderer, helmetModel;
 
         function initMenuHelmet() {
             const container = document.getElementById("helmet-preview");
 
-            scene2 = new THREE.Scene();
-            camera2 = new THREE.PerspectiveCamera(
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(
                 45,
                 container.clientWidth / container.clientHeight,
                 0.01,
                 5000
             );
-            camera2.position.set(0, 0, 5);
+            camera.position.set(0, 0, 5);
 
-            renderer2 = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer2.setSize(container.clientWidth, container.clientHeight);
-            container.appendChild(renderer2.domElement);
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
 
             const ambient = new THREE.AmbientLight(0xffffff, 1.2);
-            scene2.add(ambient);
+            scene.add(ambient);
 
             const dir = new THREE.DirectionalLight(0xffffff, 2);
             dir.position.set(5, 5, 5);
-            scene2.add(dir);
+            scene.add(dir);
 
-            const loader = new THREE.GLTFLoader();
+            const loader = new GLTFLoader();
             loader.load(
-                "models/viking_helmet.glb",
+                "./models/viking_helmet.glb",
                 (gltf) => {
                     helmetModel = gltf.scene;
 
@@ -82,7 +93,7 @@
                         }
                     });
 
-                    scene2.add(helmetModel);
+                    scene.add(helmetModel);
                     animateMenuHelmet();
                 },
                 undefined,
@@ -105,12 +116,12 @@
                 });
             }
 
-            renderer2.render(scene2, camera2);
+            renderer.render(scene, camera);
         }
 
         window.addEventListener("load", initMenuHelmet);
 
-        function startLoading() {
+        window.startLoading = function () {
             const loader = document.getElementById("loading-screen");
             const menu = document.getElementById("menu");
 
@@ -141,11 +152,9 @@
                     }, 900);
                 }
             }, 40);
-        }
+        };
     </script>
 
 </body>
-
-</html>
 
 </html>
