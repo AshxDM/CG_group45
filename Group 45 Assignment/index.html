@@ -88,18 +88,31 @@
         }
 
         function addSlot() {
-            slotCount++;
             const slotRow = document.getElementById("slotRow");
+
+
+            const activeSlots = slotRow.querySelectorAll(".slot-box").length;
+
+
+            if (activeSlots >= 4) {
+                const message = document.getElementById("slot-message");
+                message.textContent = "Maximum of 4 active slots reached.";
+                message.style.color = "#ffaa00";
+                return;
+            }
+
+
+            slotCount++;
 
             const newSlot = document.createElement("div");
             newSlot.classList.add("slot-box");
             newSlot.setAttribute("data-slot", slotCount);
 
             newSlot.innerHTML = `
-                <p>SLOT ${slotCount}</p>
-                <button class="create-btn" onclick="createSlot(${slotCount})">Create</button>
-                <button class="delete-btn" onclick="deleteSlot(this)">Delete</button>
-            `;
+        <p>SLOT ${slotCount}</p>
+        <button class="create-btn" onclick="createSlot(${slotCount})">Create</button>
+        <button class="delete-btn" onclick="deleteSlot(this)">Delete</button>
+    `;
 
             slotRow.appendChild(newSlot);
 
@@ -107,6 +120,9 @@
             message.textContent = "Slot " + slotCount + " added.";
             message.style.color = "#66ccff";
         }
+
+
+
     </script>
 
 
