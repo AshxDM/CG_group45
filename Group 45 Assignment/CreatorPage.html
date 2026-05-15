@@ -3,8 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Helmet Forge — Creator</title>
+
+    <link rel="stylesheet" href="css/layout.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 
     <script type="importmap">
     {
@@ -14,87 +16,132 @@
         }
     }
     </script>
-
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/layout.css">
-
-    <title>The Helmet Forge</title>
 </head>
 
 <body>
 
-    <div id="ui-panel">
 
+    <div id="ui-panel" class="draggable">
+        <h2>Helmet Forge</h2>
+
+        <label>Selected Part:</label>
         <div id="selectedPartLabel">No part selected</div>
 
         <label>Material</label>
-        <div id="materialDropdown" class="dropdown">
+        <div class="dropdown">
             <div id="materialSelected" class="dropdown-selected">Default</div>
+
             <div id="materialList" class="dropdown-list">
 
+                <div class="mat-option" data-mat="default">
+                    <img class="mat-thumb" src="icons/default.png">
+                    Default
+                </div>
+
                 <div class="mat-option" data-mat="metal">
-                    <img class="mat-thumb" src="materials/metal.jpg">
+                    <img class="mat-thumb" src="icons/metal.png">
                     Metal
                 </div>
 
-                <div class="mat-option" data-mat="gold">
-                    <img class="mat-thumb" src="materials/gold.jpg">
-                    Gold
-                </div>
-
-                <div class="mat-option" data-mat="chrome">
-                    <img class="mat-thumb" src="materials/chrome.jpg">
-                    Chrome
-                </div>
-
-                <div class="mat-option" data-mat="carbon">
-                    <img class="mat-thumb" src="materials/carbon.jpg">
-                    Carbon Fiber
-                </div>
-
                 <div class="mat-option" data-mat="matte">
-                    <img class="mat-thumb" src="materials/matte.jpg">
+                    <img class="mat-thumb" src="icons/matte.png">
                     Matte
                 </div>
 
                 <div class="mat-option" data-mat="hologram">
-                    <img class="mat-thumb" src="materials/hologram.jpg">
+                    <img class="mat-thumb" src="icons/hologram.png">
                     Hologram
+                </div>
+
+                <div class="mat-option" data-mat="gold">
+                    <img class="mat-thumb" src="icons/gold.png">
+                    Gold
+                </div>
+
+                <div class="mat-option" data-mat="chrome">
+                    <img class="mat-thumb" src="icons/chrome.png">
+                    Chrome
+                </div>
+
+                <div class="mat-option" data-mat="carbon">
+                    <img class="mat-thumb" src="icons/carbon.png">
+                    Carbon
                 </div>
 
             </div>
         </div>
 
-        <label>Color Overlay</label>
+        <label>Color</label>
         <input type="color" id="colorPicker" value="#ffffff">
 
-        <label>Scale Length (X)</label>
-        <input type="range" id="scaleX" min="0.1" max="3" step="0.01" value="1">
-
-        <label>Scale Width (Y)</label>
-        <input type="range" id="scaleY" min="0.1" max="3" step="0.01" value="1">
-
-        <label>Rotate X</label>
-        <input type="range" id="rotX" min="-180" max="180" step="1" value="0">
-
-        <label>Rotate Y</label>
-        <input type="range" id="rotY" min="-180" max="180" step="1" value="0">
-
-        <label>Rotate Z</label>
-        <input type="range" id="rotZ" min="-180" max="180" step="1" value="0">
-
-        <label>Extra Component</label>
+        <label>Component</label>
         <select id="componentSelect">
             <option value="none">None</option>
             <option value="horns">Horns</option>
         </select>
 
+        <button id="resetBtn">Reset</button>
         <button id="saveBtn">Save Design</button>
-        <button id="resetBtn">Reset to Default</button>
     </div>
 
-    <script type="module" src="build.js"></script>
 
+    <div id="template-panel" class="draggable">
+        <h3>Helmet Templates</h3>
+
+        <button class="template-btn" data-template="MCHelmet.glb">MC Helmet</button>
+        <button class="template-btn" data-template="SpikeHelmet.glb">Spike Helmet</button>
+    </div>
+
+
+    <div id="transform-panel" class="draggable">
+        <h3>Transform</h3>
+
+        <label>Scale X</label>
+        <input type="range" id="scaleX" min="0.5" max="2" step="0.01" value="1">
+
+        <label>Scale Y</label>
+        <input type="range" id="scaleY" min="0.5" max="2" step="0.01" value="1">
+
+        <label>Rotation X</label>
+        <input type="range" id="rotX" min="-180" max="180" step="1" value="0">
+
+        <label>Rotation Y</label>
+        <input type="range" id="rotY" min="-180" max="180" step="1" value="0">
+
+        <label>Rotation Z</label>
+        <input type="range" id="rotZ" min="-180" max="180" step="1" value="0">
+    </div>
+
+    <script>
+        function makeDraggable(panel) {
+            let offsetX = 0, offsetY = 0, isDown = false;
+
+            panel.addEventListener("pointerdown", e => {
+                isDown = true;
+                offsetX = e.clientX - panel.offsetLeft;
+                offsetY = e.clientY - panel.offsetTop;
+                panel.style.cursor = "grabbing";
+            });
+
+            window.addEventListener("pointermove", e => {
+                if (!isDown) return;
+                panel.style.left = (e.clientX - offsetX) + "px";
+                panel.style.top = (e.clientY - offsetY) + "px";
+            });
+
+            window.addEventListener("pointerup", () => {
+                isDown = false;
+                panel.style.cursor = "grab";
+            });
+        }
+
+        makeDraggable(document.getElementById("ui-panel"));
+        makeDraggable(document.getElementById("template-panel"));
+        makeDraggable(document.getElementById("transform-panel"));
+    </script>
+
+
+    <script type="module" src="build.js"></script>
 </body>
 
 </html>
