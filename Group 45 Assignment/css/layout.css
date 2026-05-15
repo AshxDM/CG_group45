@@ -1,3 +1,5 @@
+
+
 body {
     margin: 0;
     height: 100vh;
@@ -6,23 +8,7 @@ body {
     align-items: center;
     background: linear-gradient(135deg, #0a1a2f, #0f243d);
     font-family: "Orbitron", sans-serif;
-}
-
-
-#menu {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    opacity: 1;
-    transition: opacity 0.6s ease;
-}
-
-#menu h1 {
-    font-size: 52px;
-    color: #66ccff;
-    margin-bottom: 30px;
-    letter-spacing: 3px;
+    overflow: hidden;
 }
 
 button {
@@ -43,6 +29,29 @@ button:hover {
     transform: scale(1.05);
 }
 
+
+
+#menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 0.6s ease;
+}
+
+#menu h1 {
+    font-size: 52px;
+    color: #66ccff;
+    margin-bottom: 30px;
+    letter-spacing: 3px;
+}
+
+#helmet-preview {
+    width: 350px;
+    height: 350px;
+    margin-bottom: 25px;
+}
 
 #loading-screen {
     position: fixed;
@@ -69,20 +78,6 @@ button:hover {
 #loading-screen.fade-out {
     opacity: 0;
     pointer-events: none;
-}
-
-#helmet-container {
-    width: 220px;
-    height: 220px;
-    margin-bottom: 25px;
-}
-
-#helmet-preview {
-    width: 40vw;
-    height: 40vw;
-    max-width: 400px;
-    max-height: 400px;
-    margin-bottom: 30px;
 }
 
 #loading-screen h1 {
@@ -115,132 +110,6 @@ button:hover {
     letter-spacing: 3px;
 }
 
-#main-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-h1 {
-    font-size: 52px;
-    color: #66ccff;
-    margin-bottom: 30px;
-    letter-spacing: 3px;
-}
-
-#welcome p {
-    font-size: 18px;
-    color: #66ccff;
-    margin: 5px 0;
-}
-
-
-#save-slots {
-    margin-top: 40px;
-    text-align: center;
-    font-family: 'Orbitron', sans-serif;
-    color: #00ffff;
-}
-
-#save-slots h2 {
-    color: #66ccff;
-    font-size: 32px;
-    letter-spacing: 3px;
-    margin-bottom: 25px;
-}
-
-.slot-row {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 40px;
-    margin-top: 30px;
-}
-
-.slot-box {
-    background-color: rgba(0, 255, 255, 0.1);
-    border: 1px solid #00ffff;
-    border-radius: 10px;
-    padding: 25px;
-    width: 260px;
-    height: 180px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-    transition: 0.3s;
-}
-
-.slot-box:hover {
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
-}
-
-.create-btn,
-.delete-btn {
-    margin: 6px;
-    padding: 8px 14px;
-    border: none;
-    border-radius: 6px;
-    font-family: 'Orbitron', sans-serif;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.create-btn {
-    background-color: #00aaff;
-    color: #fff;
-}
-
-.delete-btn {
-    background-color: #ff0044;
-    color: #fff;
-}
-
-.create-btn:hover {
-    background-color: #00ccff;
-}
-
-.delete-btn:hover {
-    background-color: #ff3366;
-}
-
-.slot-controls {
-    margin-top: 30px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-}
-
-#add-slot-btn,
-#undo-slot-btn {
-    padding: 10px 20px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 16px;
-    background-color: #00aaff;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-#undo-slot-btn {
-    background-color: #ffaa00;
-}
-
-#add-slot-btn:hover {
-    background-color: #00ccff;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
-}
-
-#undo-slot-btn:hover {
-    background-color: #ffcc33;
-    box-shadow: 0 0 15px rgba(255, 200, 0, 0.5);
-}
-
 
 #ui-panel {
     position: fixed;
@@ -250,10 +119,16 @@ h1 {
     border: 4px solid #00ffff;
     padding: 20px;
     border-radius: 10px;
-    font-family: 'Orbitron', sans-serif;
-    color: #00ffff;
     width: 250px;
     backdrop-filter: blur(6px);
+    font-family: 'Orbitron', sans-serif;
+    color: #00ffff;
+}
+
+#ui-panel h2 {
+    margin-top: 0;
+    text-align: center;
+    letter-spacing: 2px;
 }
 
 #ui-panel label {
@@ -268,10 +143,9 @@ h1 {
     opacity: 0.8;
 }
 
-select,
-input[type="color"],
-input[type="range"],
-button {
+#ui-panel select,
+#ui-panel input[type="color"],
+#ui-panel button {
     width: 100%;
     padding: 8px;
     margin-top: 10px;
@@ -291,7 +165,7 @@ button {
     background: #ff3366;
 }
 
-/* DROPDOWN */
+
 .dropdown {
     position: relative;
     width: 100%;
@@ -320,7 +194,6 @@ button {
     z-index: 10;
 }
 
-
 .mat-option {
     display: flex;
     align-items: center;
@@ -341,3 +214,87 @@ button {
     border: 1px solid #00ffff;
     box-shadow: 0 0 4px rgba(0, 255, 255, 0.4);
 }
+
+
+
+#template-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 4px solid #00ffff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 220px;
+    backdrop-filter: blur(6px);
+    font-family: 'Orbitron', sans-serif;
+    color: #00ffff;
+}
+
+#template-panel h3 {
+    margin-top: 0;
+    text-align: center;
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+.template-btn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 12px;
+    background: #001f2f;
+    border: 1px solid #00ffff;
+    border-radius: 6px;
+    color: #00ffff;
+    cursor: pointer;
+    transition: 0.2s;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.template-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+}
+
+
+
+#transform-panel {
+    position: fixed;
+    top: 260px; 
+    right: 20px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 4px solid #00ffff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 220px;
+    backdrop-filter: blur(6px);
+    font-family: 'Orbitron', sans-serif;
+    color: #00ffff;
+}
+
+#transform-panel h3 {
+    margin-top: 0;
+    text-align: center;
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+#transform-panel label {
+    margin-top: 10px;
+    display: block;
+    font-size: 14px;
+}
+
+#transform-panel input[type="range"] {
+    width: 100%;
+    margin-top: 6px;
+}
+
+.draggable {
+    position: fixed;
+    cursor: grab;
+}
+
+.draggable:active {
+    cursor: grabbing;
+}
+

@@ -81,26 +81,17 @@ const components = {
 };
 
 const gltfLoader = new GLTFLoader();
-const helmetGlb = await gltfLoader.loadAsync("./models/MCHelmet.glb");
-helmet = helmetGlb.scene;
-
-helmet.traverse(child => {
-  if (child.isMesh) {
-    defaultMaterials[child.uuid] = child.material.clone();
-    defaultTransforms[child.uuid] = {
-      scale: child.scale.clone(),
-      rotation: child.rotation.clone()
-    };
-  }
-});
-
-const box = new THREE.Box3().setFromObject(helmet);
-const center = box.getCenter(new THREE.Vector3());
 
 pivot = new THREE.Group();
-helmet.position.sub(center);
-pivot.add(helmet);
 scene.add(pivot);
+
+const materialSelected = document.getElementById("materialSelected");
+const materialList = document.getElementById("materialList");
+const scaleX = document.getElementById("scaleX");
+const scaleY = document.getElementById("scaleY");
+const rotX = document.getElementById("rotX");
+const rotY = document.getElementById("rotY");
+const rotZ = document.getElementById("rotZ");
 
 const highlightMaterial = new THREE.MeshStandardMaterial({
   color: 0x00ffff,
@@ -110,13 +101,48 @@ const highlightMaterial = new THREE.MeshStandardMaterial({
   roughness: 0.3
 });
 
-const materialSelected = document.getElementById("materialSelected");
-const materialList = document.getElementById("materialList");
-const scaleX = document.getElementById("scaleX");
-const scaleY = document.getElementById("scaleY");
-const rotX = document.getElementById("rotX");
-const rotY = document.getElementById("rotY");
-const rotZ = document.getElementById("rotZ");
+async function loadHelmetTemplate(file) {
+  if (helmet) pivot.remove(helmet);
+  if (activeComponent) {
+    pivot.remove(activeComponent);
+    activeComponent = null;
+  }
+
+  const glb = await gltfLoader.loadAsync("./models/" + file);
+  helmet = glb.scene;
+
+  defaultMaterials = {};
+  defaultTransforms = {};
+
+  helmet.traverse(child => {
+    if (child.isMesh) {
+      defaultMaterials[child.uuid] = child.material.clone();
+      defaultTransforms[child.uuid] = {
+        scale: child.scale.clone(),
+        rotation: child.rotation.clone()
+      };
+    }
+  });
+
+  const box = new THREE.Box3().setFromObject(helmet);
+  const center = box.getCenter(new THREE.Vector3());
+  helmet.position.sub(center);
+
+  pivot.add(helmet);
+  deselectMesh();
+}
+
+await loadHelmetTemplate("MCHelmet.glb");
+
+function isInActiveComponent(obj) {
+  if (!activeComponent) return false;
+  let current = obj;
+  while (current) {
+    if (current === activeComponent) return true;
+    current = current.parent;
+  }
+  return false;
+}
 
 function selectMesh(mesh) {
   if (selectedMesh) selectedMesh.material = originalMaterial;
@@ -144,7 +170,6 @@ function deselectMesh() {
 
   scaleX.value = 1;
   scaleY.value = 1;
-
   rotX.value = 0;
   rotY.value = 0;
   rotZ.value = 0;
@@ -159,10 +184,18 @@ renderer.domElement.addEventListener("pointerdown", e => {
   const hits = raycaster.intersectObject(pivot, true);
 
   if (hits.length > 0) {
-    selectMesh(hits[0].object);
-    draggingMove = true;
-    prevX = e.clientX;
-    prevY = e.clientY;
+    const obj = hits[0].object;
+
+    selectMesh(obj);
+
+    if (isInActiveComponent(obj)) {
+      draggingMove = true;
+      prevX = e.clientX;
+      prevY = e.clientY;
+    } else {
+      draggingRotate = true;
+      prevX = e.clientX;
+    }
   } else {
     deselectMesh();
     draggingRotate = true;
@@ -171,7 +204,7 @@ renderer.domElement.addEventListener("pointerdown", e => {
 });
 
 window.addEventListener("pointermove", e => {
-  if (draggingMove && selectedMesh) {
+  if (draggingMove && selectedMesh && isInActiveComponent(selectedMesh)) {
     const dx = e.clientX - prevX;
     const dy = e.clientY - prevY;
 
@@ -192,58 +225,11 @@ window.addEventListener("pointerup", () => {
   draggingRotate = false;
 });
 
-materialSelected.addEventListener("click", () => {
-  materialList.style.display = materialList.style.display === "block" ? "none" : "block";
-});
-
-document.querySelectorAll(".mat-option").forEach(opt => {
-  opt.addEventListener("click", () => {
-    const matName = opt.getAttribute("data-mat");
-    materialSelected.textContent = opt.textContent.trim();
-    materialList.style.display = "none";
-
-    if (!selectedMesh) return;
-
-    const mat = materials[matName].clone();
-    mat.needsUpdate = true;
-    selectedMesh.material = mat;
-    originalMaterial = mat;
+document.querySelectorAll(".template-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const file = btn.getAttribute("data-template");
+    await loadHelmetTemplate(file);
   });
-});
-
-document.getElementById("colorPicker").addEventListener("input", e => {
-  if (!selectedMesh) return;
-  const color = new THREE.Color(e.target.value);
-  const mat = selectedMesh.material;
-  mat.color.set(color);
-  if (mat.emissive) mat.emissive.set(color);
-  mat.emissiveIntensity = 0.8;
-  mat.needsUpdate = true;
-});
-
-scaleX.addEventListener("input", () => {
-  if (!selectedMesh) return;
-  selectedMesh.scale.x = parseFloat(scaleX.value);
-});
-
-scaleY.addEventListener("input", () => {
-  if (!selectedMesh) return;
-  selectedMesh.scale.y = parseFloat(scaleY.value);
-});
-
-rotX.addEventListener("input", () => {
-  if (!selectedMesh) return;
-  selectedMesh.rotation.x = THREE.MathUtils.degToRad(rotX.value);
-});
-
-rotY.addEventListener("input", () => {
-  if (!selectedMesh) return;
-  selectedMesh.rotation.y = THREE.MathUtils.degToRad(rotY.value);
-});
-
-rotZ.addEventListener("input", () => {
-  if (!selectedMesh) return;
-  selectedMesh.rotation.z = THREE.MathUtils.degToRad(rotZ.value);
 });
 
 document.getElementById("componentSelect").addEventListener("change", async e => {
@@ -297,6 +283,60 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   document.getElementById("componentSelect").value = "none";
 });
 
+document.getElementById("colorPicker").addEventListener("input", e => {
+  if (!selectedMesh) return;
+  const color = new THREE.Color(e.target.value);
+  const mat = selectedMesh.material;
+  mat.color.set(color);
+  if (mat.emissive) mat.emissive.set(color);
+  mat.emissiveIntensity = 0.8;
+  mat.needsUpdate = true;
+});
+
+materialSelected.addEventListener("click", () => {
+  materialList.style.display = materialList.style.display === "block" ? "none" : "block";
+});
+
+document.querySelectorAll(".mat-option").forEach(opt => {
+  opt.addEventListener("click", () => {
+    const matName = opt.getAttribute("data-mat");
+    materialSelected.textContent = opt.textContent.trim();
+    materialList.style.display = "none";
+
+    if (!selectedMesh) return;
+
+    const mat = materials[matName].clone();
+    mat.needsUpdate = true;
+    selectedMesh.material = mat;
+    originalMaterial = mat;
+  });
+});
+
+scaleX.addEventListener("input", () => {
+  if (!selectedMesh) return;
+  selectedMesh.scale.x = parseFloat(scaleX.value);
+});
+
+scaleY.addEventListener("input", () => {
+  if (!selectedMesh) return;
+  selectedMesh.scale.y = parseFloat(scaleY.value);
+});
+
+rotX.addEventListener("input", () => {
+  if (!selectedMesh) return;
+  selectedMesh.rotation.x = THREE.MathUtils.degToRad(rotX.value);
+});
+
+rotY.addEventListener("input", () => {
+  if (!selectedMesh) return;
+  selectedMesh.rotation.y = THREE.MathUtils.degToRad(rotY.value);
+});
+
+rotZ.addEventListener("input", () => {
+  if (!selectedMesh) return;
+  selectedMesh.rotation.z = THREE.MathUtils.degToRad(rotZ.value);
+});
+
 document.getElementById("saveBtn").addEventListener("click", () => {
   if (!activeSlot) return;
 
@@ -321,6 +361,8 @@ document.getElementById("saveBtn").addEventListener("click", () => {
   });
 
   localStorage.setItem("slot" + activeSlot, JSON.stringify(saveData));
+
+  window.location.href = "index.html";
 });
 
 function animate() {
@@ -335,6 +377,11 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+
+
+
+
 
 
 
