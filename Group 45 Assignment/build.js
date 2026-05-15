@@ -10,6 +10,8 @@ let activeComponent = null;
 let defaultMaterials = {};
 let defaultTransforms = {};
 
+let activeSlot = localStorage.getItem("activeSlot");
+
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
@@ -251,6 +253,32 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   document.getElementById("componentSelect").value = "none";
 });
 
+document.getElementById("saveBtn").addEventListener("click", () => {
+  if (!activeSlot) return;
+
+  const saveData = {
+    materials: {},
+    transforms: {},
+    component: document.getElementById("componentSelect").value
+  };
+
+  helmet.traverse(child => {
+    if (child.isMesh) {
+      saveData.materials[child.name] = {
+        material: child.material.name || materialSelected.textContent.trim(),
+        color: child.material.color.getHex(),
+        emissive: child.material.emissive ? child.material.emissive.getHex() : null
+      };
+      saveData.transforms[child.name] = {
+        scale: child.scale.toArray(),
+        rotation: [child.rotation.x, child.rotation.y, child.rotation.z]
+      };
+    }
+  });
+
+  localStorage.setItem("slot" + activeSlot, JSON.stringify(saveData));
+});
+
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
@@ -282,6 +310,7 @@ window.addEventListener("pointermove", e => {
   pivot.rotation.y += deltaX * 0.01;
   prevX = e.clientX;
 });
+
 
 
 
