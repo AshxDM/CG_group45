@@ -15,6 +15,11 @@ let activeSlot = localStorage.getItem("activeSlot");
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
+let draggingMove = false;
+let draggingRotate = false;
+let prevX = 0;
+let prevY = 0;
+
 const w = window.innerWidth;
 const h = window.innerHeight;
 
@@ -72,10 +77,7 @@ const materials = {
 };
 
 const components = {
-  horns: "./models/Horns.glb",
-  crest: "./models/Crest.glb",
-  visor: "./models/Visor.glb",
-  spikes: "./models/Spikes.glb"
+  horns: "./models/Horns.glb"
 };
 
 const gltfLoader = new GLTFLoader();
@@ -107,6 +109,14 @@ const highlightMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.2,
   roughness: 0.3
 });
+
+const materialSelected = document.getElementById("materialSelected");
+const materialList = document.getElementById("materialList");
+const scaleX = document.getElementById("scaleX");
+const scaleY = document.getElementById("scaleY");
+const rotX = document.getElementById("rotX");
+const rotY = document.getElementById("rotY");
+const rotZ = document.getElementById("rotZ");
 
 function selectMesh(mesh) {
   if (selectedMesh) selectedMesh.material = originalMaterial;
@@ -140,22 +150,47 @@ function deselectMesh() {
   rotZ.value = 0;
 }
 
-function onClick(e) {
+renderer.domElement.addEventListener("pointerdown", e => {
   const rect = renderer.domElement.getBoundingClientRect();
   mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
   mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
-  const hits = raycaster.intersectObject(helmet, true);
+  const hits = raycaster.intersectObject(pivot, true);
 
-  if (hits.length > 0) selectMesh(hits[0].object);
-  else deselectMesh();
-}
+  if (hits.length > 0) {
+    selectMesh(hits[0].object);
+    draggingMove = true;
+    prevX = e.clientX;
+    prevY = e.clientY;
+  } else {
+    deselectMesh();
+    draggingRotate = true;
+    prevX = e.clientX;
+  }
+});
 
-renderer.domElement.addEventListener("pointerdown", onClick);
+window.addEventListener("pointermove", e => {
+  if (draggingMove && selectedMesh) {
+    const dx = e.clientX - prevX;
+    const dy = e.clientY - prevY;
 
-const materialSelected = document.getElementById("materialSelected");
-const materialList = document.getElementById("materialList");
+    selectedMesh.position.z += dx * 0.02;
+    selectedMesh.position.y -= dy * 0.02;
+
+    prevX = e.clientX;
+    prevY = e.clientY;
+  } else if (draggingRotate) {
+    const deltaX = e.clientX - prevX;
+    pivot.rotation.y += deltaX * 0.01;
+    prevX = e.clientX;
+  }
+});
+
+window.addEventListener("pointerup", () => {
+  draggingMove = false;
+  draggingRotate = false;
+});
 
 materialSelected.addEventListener("click", () => {
   materialList.style.display = materialList.style.display === "block" ? "none" : "block";
@@ -186,9 +221,6 @@ document.getElementById("colorPicker").addEventListener("input", e => {
   mat.needsUpdate = true;
 });
 
-const scaleX = document.getElementById("scaleX");
-const scaleY = document.getElementById("scaleY");
-
 scaleX.addEventListener("input", () => {
   if (!selectedMesh) return;
   selectedMesh.scale.x = parseFloat(scaleX.value);
@@ -198,10 +230,6 @@ scaleY.addEventListener("input", () => {
   if (!selectedMesh) return;
   selectedMesh.scale.y = parseFloat(scaleY.value);
 });
-
-const rotX = document.getElementById("rotX");
-const rotY = document.getElementById("rotY");
-const rotZ = document.getElementById("rotZ");
 
 rotX.addEventListener("input", () => {
   if (!selectedMesh) return;
@@ -223,18 +251,34 @@ document.getElementById("componentSelect").addEventListener("change", async e =>
     pivot.remove(activeComponent);
     activeComponent = null;
   }
+
   if (e.target.value === "none") return;
+
   const compGlb = await gltfLoader.loadAsync(components[e.target.value]);
-  activeComponent = compGlb.scene;
-  const box = new THREE.Box3().setFromObject(activeComponent);
-  const center = box.getCenter(new THREE.Vector3());
-  activeComponent.position.sub(center);
+  activeComponent = new THREE.Group();
+
+  compGlb.scene.traverse(child => {
+    if (child.isMesh) {
+      child.name = e.target.value + "_" + (child.name || "mesh");
+      defaultMaterials[child.uuid] = child.material.clone();
+      defaultTransforms[child.uuid] = {
+        scale: child.scale.clone(),
+        rotation: child.rotation.clone()
+      };
+      activeComponent.add(child);
+    }
+  });
+
+  const cbox = new THREE.Box3().setFromObject(activeComponent);
+  const ccenter = cbox.getCenter(new THREE.Vector3());
+  activeComponent.position.sub(ccenter);
+
   pivot.add(activeComponent);
 });
 
 document.getElementById("resetBtn").addEventListener("click", () => {
-  helmet.traverse(child => {
-    if (child.isMesh) {
+  pivot.traverse(child => {
+    if (child.isMesh && defaultMaterials[child.uuid] && defaultTransforms[child.uuid]) {
       child.material = defaultMaterials[child.uuid].clone();
       child.scale.copy(defaultTransforms[child.uuid].scale);
       child.rotation.copy(defaultTransforms[child.uuid].rotation);
@@ -262,16 +306,16 @@ document.getElementById("saveBtn").addEventListener("click", () => {
     component: document.getElementById("componentSelect").value
   };
 
-  helmet.traverse(child => {
+  pivot.traverse(child => {
     if (child.isMesh) {
       saveData.materials[child.name] = {
-        material: child.material.name || materialSelected.textContent.trim(),
         color: child.material.color.getHex(),
         emissive: child.material.emissive ? child.material.emissive.getHex() : null
       };
       saveData.transforms[child.name] = {
         scale: child.scale.toArray(),
-        rotation: [child.rotation.x, child.rotation.y, child.rotation.z]
+        rotation: [child.rotation.x, child.rotation.y, child.rotation.z],
+        position: child.position.toArray()
       };
     }
   });
@@ -292,24 +336,10 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-let isDragging = false;
-let prevX = 0;
 
-renderer.domElement.addEventListener("pointerdown", e => {
-  isDragging = true;
-  prevX = e.clientX;
-});
 
-window.addEventListener("pointerup", () => {
-  isDragging = false;
-});
 
-window.addEventListener("pointermove", e => {
-  if (!isDragging) return;
-  const deltaX = e.clientX - prevX;
-  pivot.rotation.y += deltaX * 0.01;
-  prevX = e.clientX;
-});
+
 
 
 
