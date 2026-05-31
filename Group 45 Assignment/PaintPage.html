@@ -20,7 +20,7 @@
 
 <body>
 
-    <div id="ui-panel" class="draggable">
+    <div id="ui-panel">
         <h2>Paint Mode</h2>
 
         <label>Brush Color</label>
@@ -29,33 +29,15 @@
         <label>Brush Size</label>
         <input type="range" id="brushSize" min="5" max="80" value="20">
 
-        <button id="returnBtn">Return to Creator</button>
+        <label>Rotate Helmet</label>
+        <input type="range" id="rotateSlider" min="-180" max="180" value="0">
+
+        <button id="returnNoSave">Return (Don't Save)</button>
+        <button id="returnSave">Return & Save</button>
     </div>
-
-    <script>
-        function makeDraggable(panel) {
-            let x = 0, y = 0, down = false;
-            panel.addEventListener("pointerdown", e => {
-                down = true;
-                x = e.clientX - panel.offsetLeft;
-                y = e.clientY - panel.offsetTop;
-                panel.style.cursor = "grabbing";
-            });
-            window.addEventListener("pointermove", e => {
-                if (!down) return;
-                panel.style.left = (e.clientX - x) + "px";
-                panel.style.top = (e.clientY - y) + "px";
-            });
-            window.addEventListener("pointerup", () => {
-                down = false;
-                panel.style.cursor = "grab";
-            });
-        }
-
-        makeDraggable(document.getElementById("ui-panel"));
-    </script>
 
     <script type="module" src="paint.js"></script>
 </body>
 
 </html>
+

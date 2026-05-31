@@ -9,7 +9,7 @@ let originalMaterial = null;
 let activeComponent = null;
 let defaultMaterials = {};
 let defaultTransforms = {};
-let currentTemplate = "MCHelmet.glb";
+let currentTemplate = "MCHelmetV2.glb";
 
 let activeSlot = localStorage.getItem("activeSlot");
 
@@ -21,17 +21,14 @@ let draggingRotate = false;
 let prevX = 0;
 let prevY = 0;
 
-const w = window.innerWidth;
-const h = window.innerHeight;
-
-camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
 camera.position.set(10, 0, 0);
 camera.lookAt(0, 0, 0);
 
 scene = new THREE.Scene();
 
 renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(w, h);
+renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 controls = new OrbitControls(camera, renderer.domElement);
@@ -95,6 +92,17 @@ async function loadHelmetTemplate(file) {
     }
   });
 
+  const savedPaint = JSON.parse(localStorage.getItem("paintModeData") || "{}");
+
+  helmet.traverse(child => {
+    if (child.isMesh && savedPaint.paintTexture) {
+      const tex = new THREE.TextureLoader().load(savedPaint.paintTexture);
+      tex.flipY = false;
+      child.material.map = tex;
+      child.material.needsUpdate = true;
+    }
+  });
+
   const box = new THREE.Box3().setFromObject(helmet);
   const center = box.getCenter(new THREE.Vector3());
   helmet.position.sub(center);
@@ -103,7 +111,7 @@ async function loadHelmetTemplate(file) {
   deselectMesh();
 }
 
-await loadHelmetTemplate("MCHelmet.glb");
+await loadHelmetTemplate("MCHelmetV2.glb");
 
 function isInActiveComponent(obj) {
   if (!activeComponent) return false;
@@ -199,6 +207,7 @@ window.addEventListener("pointerup", () => {
 document.querySelectorAll(".template-btn").forEach(btn => {
   btn.addEventListener("click", async () => {
     const file = btn.getAttribute("data-template");
+    currentTemplate = file;
     await loadHelmetTemplate(file);
   });
 });
@@ -354,6 +363,9 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+
+
 
 
 
