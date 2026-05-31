@@ -26,47 +26,6 @@
         <label>Selected Part:</label>
         <div id="selectedPartLabel">No part selected</div>
 
-        <label>Material</label>
-        <div class="dropdown">
-            <div id="materialSelected" class="dropdown-selected">Default</div>
-
-            <div id="materialList" class="dropdown-list">
-
-                <div class="mat-option" data-mat="default">Default</div>
-
-                <div class="mat-option" data-mat="metal">
-                    <img class="mat-thumb" src="materials/metal.jpg">
-                    Metal
-                </div>
-
-                <div class="mat-option" data-mat="matte">
-                    <img class="mat-thumb" src="materials/matte.jpg">
-                    Matte
-                </div>
-
-                <div class="mat-option" data-mat="hologram">
-                    <img class="mat-thumb" src="materials/hologram.jpg">
-                    Hologram
-                </div>
-
-                <div class="mat-option" data-mat="gold">
-                    <img class="mat-thumb" src="materials/gold.jpg">
-                    Gold
-                </div>
-
-                <div class="mat-option" data-mat="chrome">
-                    <img class="mat-thumb" src="materials/chrome.jpg">
-                    Chrome
-                </div>
-
-                <div class="mat-option" data-mat="carbon">
-                    <img class="mat-thumb" src="materials/carbon.jpg">
-                    Carbon
-                </div>
-
-            </div>
-        </div>
-
         <label>Color</label>
         <input type="color" id="colorPicker" value="#ffffff">
 
@@ -78,18 +37,14 @@
 
         <button id="resetBtn">Reset</button>
         <button id="saveBtn">Save Design</button>
+        <button id="paintPageBtn">Paint Mode</button>
     </div>
-
 
     <div id="template-panel" class="draggable">
         <h3>Helmet Templates</h3>
-
         <button class="template-btn" data-template="MCHelmet.glb">MC Helmet</button>
         <button class="template-btn" data-template="SpikeHelmet.glb">Spike Helmet</button>
-
-        <button class="template-btn" id="randomizeBtn">Randomize</button>
     </div>
-
 
     <div id="transform-panel" class="draggable">
         <h3>Transform</h3>
@@ -112,29 +67,32 @@
 
     <script>
         function makeDraggable(panel) {
-            let offsetX = 0, offsetY = 0, isDown = false;
-
+            let x = 0, y = 0, down = false;
             panel.addEventListener("pointerdown", e => {
-                isDown = true;
-                offsetX = e.clientX - panel.offsetLeft;
-                offsetY = e.clientY - panel.offsetTop;
+                down = true;
+                x = e.clientX - panel.offsetLeft;
+                y = e.clientY - panel.offsetTop;
                 panel.style.cursor = "grabbing";
             });
-
             window.addEventListener("pointermove", e => {
-                if (!isDown) return;
-                panel.style.left = (e.clientX - offsetX) + "px";
-                panel.style.top = (e.clientY - offsetY) + "px";
+                if (!down) return;
+                panel.style.left = (e.clientX - x) + "px";
+                panel.style.top = (e.clientY - y) + "px";
             });
-
             window.addEventListener("pointerup", () => {
-                isDown = false;
+                down = false;
                 panel.style.cursor = "grab";
             });
         }
 
         makeDraggable(document.getElementById("ui-panel"));
         makeDraggable(document.getElementById("template-panel"));
+        makeDraggable(document.getElementById("transform-panel"));
+
+        document.getElementById("paintPageBtn").onclick = () => {
+            saveCurrentDesign();
+            window.location.href = "PaintPage.html";
+        };
     </script>
 
     <script type="module" src="build.js"></script>

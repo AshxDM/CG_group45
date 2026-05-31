@@ -3,19 +3,33 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>The Helmet Forge — Slots</title>
+    <title>The Helmet Forge — Paint Mode</title>
+
     <link rel="stylesheet" href="css/layout.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"
+        }
+    }
+    </script>
 </head>
 
 <body>
 
     <div id="ui-panel" class="draggable">
-        <h2>Save Slots</h2>
+        <h2>Paint Mode</h2>
 
-        <button onclick="selectSlot(1)">Slot 1</button>
-        <button onclick="selectSlot(2)">Slot 2</button>
-        <button onclick="selectSlot(3)">Slot 3</button>
+        <label>Brush Color</label>
+        <input type="color" id="colorPicker" value="#ff0000">
+
+        <label>Brush Size</label>
+        <input type="range" id="brushSize" min="5" max="80" value="20">
+
+        <button id="returnBtn">Return to Creator</button>
     </div>
 
     <script>
@@ -39,13 +53,9 @@
         }
 
         makeDraggable(document.getElementById("ui-panel"));
-
-        function selectSlot(n) {
-            localStorage.setItem("activeSlot", n);
-            window.location.href = "CreatorPage.html";
-        }
     </script>
 
+    <script type="module" src="paint.js"></script>
 </body>
 
 </html>
