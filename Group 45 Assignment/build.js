@@ -9,6 +9,7 @@ let originalMaterial = null;
 let activeComponent = null;
 let defaultMaterials = {};
 let defaultTransforms = {};
+let currentTemplate = "MCHelmetV2.glb";
 
 let activeSlot = localStorage.getItem("activeSlot");
 
@@ -20,17 +21,14 @@ let draggingRotate = false;
 let prevX = 0;
 let prevY = 0;
 
-const w = window.innerWidth;
-const h = window.innerHeight;
-
-camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
 camera.position.set(10, 0, 0);
 camera.lookAt(0, 0, 0);
 
 scene = new THREE.Scene();
 
 renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(w, h);
+renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 controls = new OrbitControls(camera, renderer.domElement);
@@ -46,36 +44,6 @@ new RGBELoader()
     scene.background = t;
   });
 
-const textureLoader = new THREE.TextureLoader();
-
-const carbonTexture = textureLoader.load("./materials/carbon.jpg", t => {
-  t.wrapS = THREE.RepeatWrapping;
-  t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(4, 4);
-  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
-});
-
-const materials = {
-  default: new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.5, roughness: 0.4 }),
-  metal: new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 1, roughness: 0.2 }),
-  matte: new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.1, roughness: 0.9 }),
-  hologram: new THREE.MeshPhongMaterial({
-    color: 0xffffff,
-    emissive: 0xffffff,
-    emissiveIntensity: 0.8,
-    transparent: true,
-    opacity: 0.5,
-    shininess: 150
-  }),
-  gold: new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 1, roughness: 0.2 }),
-  chrome: new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0 }),
-  carbon: new THREE.MeshStandardMaterial({
-    map: carbonTexture,
-    metalness: 0.4,
-    roughness: 0.6
-  })
-};
-
 const components = {
   horns: "./models/Horns.glb"
 };
@@ -85,8 +53,6 @@ const gltfLoader = new GLTFLoader();
 pivot = new THREE.Group();
 scene.add(pivot);
 
-const materialSelected = document.getElementById("materialSelected");
-const materialList = document.getElementById("materialList");
 const scaleX = document.getElementById("scaleX");
 const scaleY = document.getElementById("scaleY");
 const rotX = document.getElementById("rotX");
@@ -102,6 +68,8 @@ const highlightMaterial = new THREE.MeshStandardMaterial({
 });
 
 async function loadHelmetTemplate(file) {
+  currentTemplate = file;
+
   if (helmet) pivot.remove(helmet);
   if (activeComponent) {
     pivot.remove(activeComponent);
@@ -124,6 +92,17 @@ async function loadHelmetTemplate(file) {
     }
   });
 
+  const savedPaint = JSON.parse(localStorage.getItem("paintModeData") || "{}");
+
+  helmet.traverse(child => {
+    if (child.isMesh && savedPaint.paintTexture) {
+      const tex = new THREE.TextureLoader().load(savedPaint.paintTexture);
+      tex.flipY = false;
+      child.material.map = tex;
+      child.material.needsUpdate = true;
+    }
+  });
+
   const box = new THREE.Box3().setFromObject(helmet);
   const center = box.getCenter(new THREE.Vector3());
   helmet.position.sub(center);
@@ -132,7 +111,7 @@ async function loadHelmetTemplate(file) {
   deselectMesh();
 }
 
-await loadHelmetTemplate("MCHelmet.glb");
+await loadHelmetTemplate("MCHelmetV2.glb");
 
 function isInActiveComponent(obj) {
   if (!activeComponent) return false;
@@ -228,6 +207,7 @@ window.addEventListener("pointerup", () => {
 document.querySelectorAll(".template-btn").forEach(btn => {
   btn.addEventListener("click", async () => {
     const file = btn.getAttribute("data-template");
+    currentTemplate = file;
     await loadHelmetTemplate(file);
   });
 });
@@ -278,7 +258,6 @@ document.getElementById("resetBtn").addEventListener("click", () => {
 
   deselectMesh();
 
-  materialSelected.textContent = "Default";
   document.getElementById("colorPicker").value = "#ffffff";
   document.getElementById("componentSelect").value = "none";
 });
@@ -291,25 +270,6 @@ document.getElementById("colorPicker").addEventListener("input", e => {
   if (mat.emissive) mat.emissive.set(color);
   mat.emissiveIntensity = 0.8;
   mat.needsUpdate = true;
-});
-
-materialSelected.addEventListener("click", () => {
-  materialList.style.display = materialList.style.display === "block" ? "none" : "block";
-});
-
-document.querySelectorAll(".mat-option").forEach(opt => {
-  opt.addEventListener("click", () => {
-    const matName = opt.getAttribute("data-mat");
-    materialSelected.textContent = opt.textContent.trim();
-    materialList.style.display = "none";
-
-    if (!selectedMesh) return;
-
-    const mat = materials[matName].clone();
-    mat.needsUpdate = true;
-    selectedMesh.material = mat;
-    originalMaterial = mat;
-  });
 });
 
 scaleX.addEventListener("input", () => {
@@ -341,6 +301,7 @@ document.getElementById("saveBtn").addEventListener("click", () => {
   if (!activeSlot) return;
 
   const saveData = {
+    template: currentTemplate,
     materials: {},
     transforms: {},
     component: document.getElementById("componentSelect").value
@@ -365,6 +326,31 @@ document.getElementById("saveBtn").addEventListener("click", () => {
   window.location.href = "index.html";
 });
 
+window.saveCurrentDesign = function () {
+  const saveData = {
+    template: currentTemplate,
+    materials: {},
+    transforms: {},
+    component: document.getElementById("componentSelect").value
+  };
+
+  pivot.traverse(child => {
+    if (child.isMesh) {
+      saveData.materials[child.name] = {
+        color: child.material.color.getHex(),
+        emissive: child.material.emissive ? child.material.emissive.getHex() : null
+      };
+      saveData.transforms[child.name] = {
+        scale: child.scale.toArray(),
+        rotation: [child.rotation.x, child.rotation.y, child.rotation.z],
+        position: child.position.toArray()
+      };
+    }
+  });
+
+  localStorage.setItem("paintModeData", JSON.stringify(saveData));
+};
+
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
@@ -377,6 +363,13 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+
+
+
+
+
+
 
 
 

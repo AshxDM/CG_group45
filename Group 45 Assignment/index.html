@@ -3,129 +3,48 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <script src="js/three.js"></script>
-    <script src="js/OrbitControls.js"></script>
-    <script src="js/GLTFLoader.js"></script>
-
-
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>The Helmet Forge — Slots</title>
     <link rel="stylesheet" href="css/layout.css">
-
-    <title>The Helmet Forge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
-    <div id="main-container">
-        <div id="welcome">
-            <h1>WELCOME</h1>
-            <p>Customise legendary helmets in 3D.</p>
-            <p>Use your mouse to rotate, zoom, and inspect your creation.</p>
-        </div>
+    <div id="ui-panel" class="draggable">
+        <h2>Save Slots</h2>
 
-        <div id="save-slots">
-            <h2>SELECT SAVE SLOT</h2>
-
-            <div class="slot-row" id="slotRow">
-                <div class="slot-box" data-slot="1">
-                    <p>SLOT 1</p>
-                    <button class="create-btn" onclick="createSlot(1)">Create</button>
-                    <button class="delete-btn" onclick="deleteSlot(this)">Delete</button>
-                </div>
-            </div>
-
-            <div class="slot-controls">
-                <button id="add-slot-btn" onclick="addSlot()">+ Add Slot</button>
-                <button id="undo-slot-btn" onclick="undoDelete()">Undo Delete</button>
-            </div>
-
-            <p id="slot-message"></p>
-        </div>
+        <button onclick="selectSlot(1)">Slot 1</button>
+        <button onclick="selectSlot(2)">Slot 2</button>
+        <button onclick="selectSlot(3)">Slot 3</button>
     </div>
 
     <script>
-        let slotCount = 1;
-        let deletedSlots = [];
+        function makeDraggable(panel) {
+            let x = 0, y = 0, down = false;
+            panel.addEventListener("pointerdown", e => {
+                down = true;
+                x = e.clientX - panel.offsetLeft;
+                y = e.clientY - panel.offsetTop;
+                panel.style.cursor = "grabbing";
+            });
+            window.addEventListener("pointermove", e => {
+                if (!down) return;
+                panel.style.left = (e.clientX - x) + "px";
+                panel.style.top = (e.clientY - y) + "px";
+            });
+            window.addEventListener("pointerup", () => {
+                down = false;
+                panel.style.cursor = "grab";
+            });
+        }
 
-        function createSlot(slot) {
-            localStorage.setItem("helmetForgeSaveSlot", slot);
+        makeDraggable(document.getElementById("ui-panel"));
+
+        function selectSlot(n) {
+            localStorage.setItem("activeSlot", n);
             window.location.href = "CreatorPage.html";
         }
-
-        function deleteSlot(button) {
-            const slot = button.closest(".slot-box");
-            deletedSlots.push(slot.cloneNode(true));
-            slot.remove();
-
-            const message = document.getElementById("slot-message");
-            message.textContent = "Slot deleted.";
-            message.style.color = "#ff3366";
-        }
-
-        function undoDelete() {
-            if (deletedSlots.length === 0) {
-                const message = document.getElementById("slot-message");
-                message.textContent = "No deleted slots to restore.";
-                message.style.color = "#ffaa00";
-                return;
-            }
-
-            const restoredSlot = deletedSlots.pop();
-            const slotRow = document.getElementById("slotRow");
-
-            const slotNumber = restoredSlot.getAttribute("data-slot");
-            restoredSlot.querySelector(".create-btn").setAttribute("onclick", `createSlot(${slotNumber})`);
-            restoredSlot.querySelector(".delete-btn").setAttribute("onclick", "deleteSlot(this)");
-
-            slotRow.appendChild(restoredSlot);
-
-            const message = document.getElementById("slot-message");
-            message.textContent = "Deleted slot restored.";
-            message.style.color = "#66ff99";
-        }
-
-        function addSlot() {
-            const slotRow = document.getElementById("slotRow");
-
-
-            const activeSlots = slotRow.querySelectorAll(".slot-box").length;
-
-
-            if (activeSlots >= 4) {
-                const message = document.getElementById("slot-message");
-                message.textContent = "Maximum of 4 active slots reached.";
-                message.style.color = "#ffaa00";
-                return;
-            }
-
-
-            slotCount++;
-
-            const newSlot = document.createElement("div");
-            newSlot.classList.add("slot-box");
-            newSlot.setAttribute("data-slot", slotCount);
-
-            newSlot.innerHTML = `
-        <p>SLOT ${slotCount}</p>
-        <button class="create-btn" onclick="createSlot(${slotCount})">Create</button>
-        <button class="delete-btn" onclick="deleteSlot(this)">Delete</button>
-    `;
-
-            slotRow.appendChild(newSlot);
-
-            const message = document.getElementById("slot-message");
-            message.textContent = "Slot " + slotCount + " added.";
-            message.style.color = "#66ccff";
-        }
-
-
-
     </script>
-
-
 
 </body>
 

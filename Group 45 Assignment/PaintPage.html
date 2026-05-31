@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>The Helmet Forge — Paint Mode</title>
+
+    <link rel="stylesheet" href="css/layout.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+
+<body>
+
+    <div id="ui-panel">
+        <h2>Paint Mode</h2>
+
+        <label>Brush Color</label>
+        <input type="color" id="colorPicker" value="#ff0000">
+
+        <label>Brush Size</label>
+        <input type="range" id="brushSize" min="5" max="80" value="20">
+
+        <label>Rotate Helmet</label>
+        <input type="range" id="rotateSlider" min="-180" max="180" value="0">
+
+        <button id="returnNoSave">Return (Don't Save)</button>
+        <button id="returnSave">Return & Save</button>
+    </div>
+
+    <script type="module" src="paint.js"></script>
+</body>
+
+</html>
+
