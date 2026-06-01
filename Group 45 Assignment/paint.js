@@ -44,25 +44,37 @@ function init() {
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enablePan = false;
-    controls.enableRotate = false;
+    controls.enableRotate = true;
+    // Left button paints, right button orbits the camera
+    controls.mouseButtons = {
+        LEFT: null,
+        MIDDLE: THREE.MOUSE.DOLLY,
+        RIGHT: THREE.MOUSE.ROTATE
+    };
 
     pivot = new THREE.Group();
     scene.add(pivot);
 
     renderer.domElement.addEventListener("pointerdown", e => {
+        if (e.button !== 0) return; // only left button paints
         isPainting = true;
         lastUV = null;
         paintStroke(e);
     });
 
-    renderer.domElement.addEventListener("pointerup", () => {
+    renderer.domElement.addEventListener("pointerup", e => {
+        if (e.button !== 0) return;
         isPainting = false;
         lastUV = null;
     });
 
     renderer.domElement.addEventListener("pointermove", e => {
-        if (isPainting) paintStroke(e);
+        // bail if the left button is no longer held (e.g. released off-canvas)
+        if (isPainting && (e.buttons & 1)) paintStroke(e);
     });
+
+    // stop the browser context menu so right-drag can orbit cleanly
+    renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
 
     document.getElementById("returnNoSave").onclick = () => {
         window.location.href = "CreatorPage.html";
@@ -187,16 +199,3 @@ function animate() {
     renderer.render(scene, camera);
     controls.update();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
