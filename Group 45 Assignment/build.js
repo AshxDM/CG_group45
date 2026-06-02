@@ -79,26 +79,34 @@ async function loadHelmetTemplate(file) {
   const glb = await gltfLoader.loadAsync("./models/" + file);
   helmet = glb.scene;
 
+  const saved = JSON.parse(localStorage.getItem("slot" + activeSlot) || "{}");
+  const savedIDs = saved.meshIDs || [];
+
+  let index = 0;
+
   defaultMaterials = {};
   defaultTransforms = {};
 
   helmet.traverse(child => {
     if (child.isMesh) {
-      defaultMaterials[child.uuid] = child.material.clone();
-      defaultTransforms[child.uuid] = {
+      const id = savedIDs[index] || ("mesh_" + index);
+      child.userData.id = id;
+      defaultMaterials[id] = child.material.clone();
+      defaultTransforms[id] = {
         scale: child.scale.clone(),
-        rotation: child.rotation.clone()
+        rotation: child.rotation.clone(),
+        position: child.position.clone()
       };
+      index++;
     }
   });
 
-  const savedPaint = JSON.parse(localStorage.getItem("paintModeData") || "{}");
-  const vertexColors = savedPaint.vertexColors || {};
+  const vertexColors = saved.vertexColors || {};
 
   helmet.traverse(child => {
     if (!child.isMesh) return;
-    // Paint is now stored as per-vertex colors keyed by mesh name.
-    const colorData = vertexColors[child.name];
+    const id = child.userData.id;
+    const colorData = vertexColors[id];
     if (colorData) {
       const geo = child.geometry;
       const count = geo.attributes.position.count;
@@ -112,6 +120,8 @@ async function loadHelmetTemplate(file) {
     }
   });
 
+  applySavedData(saved);
+
   const box = new THREE.Box3().setFromObject(helmet);
   const center = box.getCenter(new THREE.Vector3());
   helmet.position.sub(center);
@@ -120,17 +130,63 @@ async function loadHelmetTemplate(file) {
   deselectMesh();
 }
 
-await loadHelmetTemplate("MCHelmetV2.glb");
+function applySavedData(saved) {
+  if (!saved.transforms) return;
 
-function isInActiveComponent(obj) {
-  if (!activeComponent) return false;
-  let current = obj;
-  while (current) {
-    if (current === activeComponent) return true;
-    current = current.parent;
+  pivot.traverse(child => {
+    if (!child.isMesh) return;
+    const id = child.userData.id;
+
+    if (saved.transforms[id]) {
+      const t = saved.transforms[id];
+      child.scale.fromArray(t.scale);
+      child.rotation.set(t.rotation[0], t.rotation[1], t.rotation[2]);
+      child.position.fromArray(t.position);
+    }
+
+    if (saved.materials && saved.materials[id]) {
+      const m = saved.materials[id];
+      child.material.color.setHex(m.color);
+      if (child.material.emissive && m.emissive !== null) {
+        child.material.emissive.setHex(m.emissive);
+      }
+    }
+  });
+
+  if (saved.component && saved.component !== "none") {
+    loadComponent(saved.component);
   }
-  return false;
 }
+
+async function loadComponent(name) {
+  const compGlb = await gltfLoader.loadAsync(components[name]);
+  activeComponent = new THREE.Group();
+
+  let index = 0;
+
+  compGlb.scene.traverse(child => {
+    if (child.isMesh) {
+      const id = name + "_" + index;
+      child.userData.id = id;
+      defaultMaterials[id] = child.material.clone();
+      defaultTransforms[id] = {
+        scale: child.scale.clone(),
+        rotation: child.rotation.clone(),
+        position: child.position.clone()
+      };
+      activeComponent.add(child);
+      index++;
+    }
+  });
+
+  const cbox = new THREE.Box3().setFromObject(activeComponent);
+  const ccenter = cbox.getCenter(new THREE.Vector3());
+  activeComponent.position.sub(ccenter);
+
+  pivot.add(activeComponent);
+}
+
+await loadHelmetTemplate("MCHelmetV2.glb");
 
 function selectMesh(mesh) {
   if (selectedMesh) selectedMesh.material = originalMaterial;
@@ -138,7 +194,7 @@ function selectMesh(mesh) {
   originalMaterial = mesh.material;
   mesh.material = highlightMaterial;
 
-  document.getElementById("selectedPartLabel").textContent = mesh.name;
+  document.getElementById("selectedPartLabel").textContent = mesh.userData.id;
 
   scaleX.value = mesh.scale.x;
   scaleY.value = mesh.scale.y;
@@ -176,7 +232,7 @@ renderer.domElement.addEventListener("pointerdown", e => {
 
     selectMesh(obj);
 
-    if (isInActiveComponent(obj)) {
+    if (activeComponent && activeComponent.children.includes(obj)) {
       draggingMove = true;
       prevX = e.clientX;
       prevY = e.clientY;
@@ -192,7 +248,7 @@ renderer.domElement.addEventListener("pointerdown", e => {
 });
 
 window.addEventListener("pointermove", e => {
-  if (draggingMove && selectedMesh && isInActiveComponent(selectedMesh)) {
+  if (draggingMove && selectedMesh) {
     const dx = e.clientX - prevX;
     const dy = e.clientY - prevY;
 
@@ -229,34 +285,18 @@ document.getElementById("componentSelect").addEventListener("change", async e =>
 
   if (e.target.value === "none") return;
 
-  const compGlb = await gltfLoader.loadAsync(components[e.target.value]);
-  activeComponent = new THREE.Group();
-
-  compGlb.scene.traverse(child => {
-    if (child.isMesh) {
-      child.name = e.target.value + "_" + (child.name || "mesh");
-      defaultMaterials[child.uuid] = child.material.clone();
-      defaultTransforms[child.uuid] = {
-        scale: child.scale.clone(),
-        rotation: child.rotation.clone()
-      };
-      activeComponent.add(child);
-    }
-  });
-
-  const cbox = new THREE.Box3().setFromObject(activeComponent);
-  const ccenter = cbox.getCenter(new THREE.Vector3());
-  activeComponent.position.sub(ccenter);
-
-  pivot.add(activeComponent);
+  await loadComponent(e.target.value);
 });
 
 document.getElementById("resetBtn").addEventListener("click", () => {
   pivot.traverse(child => {
-    if (child.isMesh && defaultMaterials[child.uuid] && defaultTransforms[child.uuid]) {
-      child.material = defaultMaterials[child.uuid].clone();
-      child.scale.copy(defaultTransforms[child.uuid].scale);
-      child.rotation.copy(defaultTransforms[child.uuid].rotation);
+    if (!child.isMesh) return;
+    const id = child.userData.id;
+    if (defaultMaterials[id] && defaultTransforms[id]) {
+      child.material = defaultMaterials[id].clone();
+      child.scale.copy(defaultTransforms[id].scale);
+      child.rotation.copy(defaultTransforms[id].rotation);
+      child.position.copy(defaultTransforms[id].position);
     }
   });
 
@@ -273,12 +313,22 @@ document.getElementById("resetBtn").addEventListener("click", () => {
 
 document.getElementById("colorPicker").addEventListener("input", e => {
   if (!selectedMesh) return;
+
   const color = new THREE.Color(e.target.value);
-  const mat = selectedMesh.material;
-  mat.color.set(color);
-  if (mat.emissive) mat.emissive.set(color);
-  mat.emissiveIntensity = 0.8;
-  mat.needsUpdate = true;
+
+  selectedMesh.material.color.set(color);
+  if (selectedMesh.material.emissive) {
+    selectedMesh.material.emissive.set(color);
+  }
+  selectedMesh.material.needsUpdate = true;
+
+  if (originalMaterial) {
+    originalMaterial.color.set(color);
+    if (originalMaterial.emissive) {
+      originalMaterial.emissive.set(color);
+    }
+    originalMaterial.needsUpdate = true;
+  }
 });
 
 scaleX.addEventListener("input", () => {
@@ -313,52 +363,37 @@ document.getElementById("saveBtn").addEventListener("click", () => {
     template: currentTemplate,
     materials: {},
     transforms: {},
-    component: document.getElementById("componentSelect").value
+    component: document.getElementById("componentSelect").value,
+    vertexColors: {},
+    meshIDs: []
   };
 
   pivot.traverse(child => {
-    if (child.isMesh) {
-      saveData.materials[child.name] = {
-        color: child.material.color.getHex(),
-        emissive: child.material.emissive ? child.material.emissive.getHex() : null
-      };
-      saveData.transforms[child.name] = {
-        scale: child.scale.toArray(),
-        rotation: [child.rotation.x, child.rotation.y, child.rotation.z],
-        position: child.position.toArray()
-      };
+    if (!child.isMesh) return;
+    const id = child.userData.id;
+
+    saveData.meshIDs.push(id);
+
+    saveData.materials[id] = {
+      color: child.material.color.getHex(),
+      emissive: child.material.emissive ? child.material.emissive.getHex() : null
+    };
+
+    saveData.transforms[id] = {
+      scale: child.scale.toArray(),
+      rotation: [child.rotation.x, child.rotation.y, child.rotation.z],
+      position: child.position.toArray()
+    };
+
+    const geo = child.geometry;
+    if (geo.attributes.color) {
+      saveData.vertexColors[id] = Array.from(geo.attributes.color.array);
     }
   });
 
   localStorage.setItem("slot" + activeSlot, JSON.stringify(saveData));
-
-  window.location.href = "index.html";
+  alert("Design saved!");
 });
-
-window.saveCurrentDesign = function () {
-  const saveData = {
-    template: currentTemplate,
-    materials: {},
-    transforms: {},
-    component: document.getElementById("componentSelect").value
-  };
-
-  pivot.traverse(child => {
-    if (child.isMesh) {
-      saveData.materials[child.name] = {
-        color: child.material.color.getHex(),
-        emissive: child.material.emissive ? child.material.emissive.getHex() : null
-      };
-      saveData.transforms[child.name] = {
-        scale: child.scale.toArray(),
-        rotation: [child.rotation.x, child.rotation.y, child.rotation.z],
-        position: child.position.toArray()
-      };
-    }
-  });
-
-  localStorage.setItem("paintModeData", JSON.stringify(saveData));
-};
 
 function animate() {
   requestAnimationFrame(animate);
@@ -372,3 +407,7 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+
+
+
