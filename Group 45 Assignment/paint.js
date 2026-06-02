@@ -5,21 +5,26 @@ import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 
 let scene, camera, renderer, controls;
 let helmet, pivot;
-let paintCanvas, paintCtx, paintTexture;
+
+// Per-mesh paint data: uuid -> { mesh, colorAttr, positions, worldMatrix }
+const parts = {};
+// The mesh the user has chosen to paint (only set via the dropdown).
+let activeMesh = null;
 
 let isPainting = false;
-let lastUV = null;
 
 const raycaster = new THREE.Raycaster();
-raycaster.firstHitOnly = true; // smoother UV hits
 const mouse = new THREE.Vector2();
+
+// reusable temporaries to avoid per-stroke allocation
+const _v = new THREE.Vector3();
+const _hitLocal = new THREE.Vector3();
 
 init();
 loadHelmet().then(() => animate());
 
 function init() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x111111);
 
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0, 0, 7);
@@ -29,18 +34,16 @@ function init() {
     renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
+    // Same lighting as the Creator page: the HDR is the only light source and
+    // also serves as the background. No extra ambient/directional lights, which
+    // is what was over-brightening the helmet to white.
     new RGBELoader()
         .setPath("./background/")
         .load("monochrome_studio_02_4k.hdr", hdr => {
             hdr.mapping = THREE.EquirectangularReflectionMapping;
             scene.environment = hdr;
+            scene.background = hdr;
         });
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-
-    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
-    dir.position.set(5, 10, 5);
-    scene.add(dir);
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enablePan = false;
@@ -56,35 +59,29 @@ function init() {
     scene.add(pivot);
 
     renderer.domElement.addEventListener("pointerdown", e => {
-        if (e.button !== 0) return; // only left button paints
+        if (e.button !== 0) return;       // left button only
         isPainting = true;
-        lastUV = null;
         paintStroke(e);
     });
 
     renderer.domElement.addEventListener("pointerup", e => {
         if (e.button !== 0) return;
         isPainting = false;
-        lastUV = null;
     });
 
     renderer.domElement.addEventListener("pointermove", e => {
-        // bail if the left button is no longer held (e.g. released off-canvas)
         if (isPainting && (e.buttons & 1)) paintStroke(e);
     });
 
-    // stop the browser context menu so right-drag can orbit cleanly
     renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
 
     document.getElementById("returnNoSave").onclick = () => {
         window.location.href = "CreatorPage.html";
     };
-
     document.getElementById("returnSave").onclick = () => {
         savePaintedHelmet();
         window.location.href = "CreatorPage.html";
     };
-
     document.getElementById("rotateSlider").oninput = e => {
         pivot.rotation.y = THREE.MathUtils.degToRad(e.target.value);
     };
@@ -96,101 +93,181 @@ function init() {
     });
 }
 
+function setLabel(text) {
+    const el = document.getElementById("activePartLabel");
+    if (el) el.textContent = text;
+}
+
 async function loadHelmet() {
     const saved = JSON.parse(localStorage.getItem("paintModeData") || "{}");
     const template = saved.template || "MCHelmetV2.glb";
 
     const loader = new GLTFLoader();
     const glb = await loader.loadAsync("./models/" + template);
-
     helmet = glb.scene;
 
-    paintCanvas = document.createElement("canvas");
-    paintCanvas.width = 2048;
-    paintCanvas.height = 2048;
-
-    paintCtx = paintCanvas.getContext("2d");
-    paintCtx.fillStyle = "#ffffff";
-    paintCtx.fillRect(0, 0, paintCanvas.width, paintCanvas.height);
-
-    paintTexture = new THREE.CanvasTexture(paintCanvas);
-    paintTexture.flipY = false;
+    const savedColors = saved.vertexColors || {};
 
     helmet.traverse(child => {
-        if (child.isMesh) {
-            child.material.map = paintTexture;
-            child.material.needsUpdate = true;
+        if (!child.isMesh) return;
 
-            if (saved.materials && saved.materials[child.name]) {
-                const m = saved.materials[child.name];
-                child.material.color.setHex(m.color);
-                if (m.emissive) child.material.emissive.setHex(m.emissive);
-            }
+        const geo = child.geometry;
+        const count = geo.attributes.position.count;
 
-            if (saved.transforms && saved.transforms[child.name]) {
-                const t = saved.transforms[child.name];
-                child.scale.fromArray(t.scale);
-                child.rotation.set(t.rotation[0], t.rotation[1], t.rotation[2]);
-                child.position.fromArray(t.position);
-            }
+        // Set up (or restore) a per-vertex color attribute, default white.
+        let colorAttr = geo.getAttribute("color");
+        if (!colorAttr) {
+            const arr = new Float32Array(count * 3).fill(1); // white
+            colorAttr = new THREE.BufferAttribute(arr, 3);
+            geo.setAttribute("color", colorAttr);
         }
+
+        const prev = savedColors[child.name];
+        if (prev && prev.length === count * 3) {
+            colorAttr.copyArray(prev);
+            colorAttr.needsUpdate = true;
+        }
+
+        // Material must honor vertex colors. Keep it lit/standard.
+        child.material = child.material.clone();
+        child.material.vertexColors = true;
+        child.material.map = null;       // vertex color replaces the texture map
+        child.material.color.set(0xffffff);
+        child.material.needsUpdate = true;
+
+        // restore transforms from the creator stage
+        if (saved.transforms && saved.transforms[child.name]) {
+            const t = saved.transforms[child.name];
+            child.scale.fromArray(t.scale);
+            child.rotation.set(t.rotation[0], t.rotation[1], t.rotation[2]);
+            child.position.fromArray(t.position);
+        }
+
+        parts[child.uuid] = {
+            mesh: child,
+            colorAttr,
+            positions: geo.attributes.position,
+            spacing: estimateSpacing(geo.attributes.position)
+        };
     });
 
     const box = new THREE.Box3().setFromObject(helmet);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
-
     helmet.position.sub(center);
-
-    // VISUAL CENTERING FIX — guaranteed centered
     helmet.position.y += size.y * 0.35;
 
     pivot.add(helmet);
+
+    setLabel("Click and drag to paint");
+}
+
+function estimateSpacing(posAttr) {
+    // Rough median nearest-neighbour distance from a sample of vertices,
+    // used to size the brush so dense meshes still get painted.
+    const n = posAttr.count;
+    const sampleCount = Math.min(60, n);
+    const dists = [];
+    for (let s = 0; s < sampleCount; s++) {
+        const i = Math.floor((s / sampleCount) * n);
+        const ix = posAttr.getX(i), iy = posAttr.getY(i), iz = posAttr.getZ(i);
+        let best = Infinity;
+        for (let j = 0; j < n; j += Math.max(1, Math.floor(n / 400))) {
+            if (j === i) continue;
+            const dx = posAttr.getX(j) - ix;
+            const dy = posAttr.getY(j) - iy;
+            const dz = posAttr.getZ(j) - iz;
+            const d2 = dx * dx + dy * dy + dz * dz;
+            if (d2 > 1e-8 && d2 < best) best = d2;
+        }
+        if (best < Infinity) dists.push(Math.sqrt(best));
+    }
+    if (!dists.length) return null;
+    dists.sort((a, b) => a - b);
+    return dists[Math.floor(dists.length / 2)];
 }
 
 function paintStroke(e) {
-    if (!isPainting || !paintCanvas || !helmet) return;
+    if (!isPainting) return;
 
     const rect = renderer.domElement.getBoundingClientRect();
     mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
+
+    // Hit the whole helmet; paint whichever part the ray strikes first.
     const hits = raycaster.intersectObject(pivot, true);
+    if (hits.length === 0) return;
 
-    if (hits.length === 0 || !hits[0].uv) return;
+    const hit = hits[0];
+    const hitMesh = hit.object;
+    const part = parts[hitMesh.uuid];
+    if (!part) return;
 
-    const uv = hits[0].uv;
-    const x = uv.x * paintCanvas.width;
-    const y = (1 - uv.y) * paintCanvas.height;
+    // Convert the world-space hit point into the hit mesh's local space so we
+    // can compare against its (local) vertex positions directly.
+    _hitLocal.copy(hit.point);
+    hitMesh.worldToLocal(_hitLocal);
 
-    const color = document.getElementById("colorPicker").value;
-    const size = parseFloat(document.getElementById("brushSize").value);
+    const color = new THREE.Color(document.getElementById("colorPicker").value);
 
-    paintCtx.fillStyle = color;
-    paintCtx.strokeStyle = color;
-    paintCtx.lineWidth = size * 2;
-    paintCtx.lineCap = "round";
+    // Brush size slider (5..80) -> local radius, scaled to this mesh's size.
+    const sliderSize = parseFloat(document.getElementById("brushSize").value);
+    const geoBox = new THREE.Box3().setFromBufferAttribute(part.positions);
+    const diag = geoBox.getSize(_v).length() || 1;
+    // Bigger multiplier so the brush reliably catches a cluster of vertices,
+    // plus a floor tied to the mesh's typical vertex spacing so dense/small
+    // meshes (like the shell) still get painted.
+    const spacing = part.spacing || diag * 0.05;
+    const radius = Math.max(
+        (sliderSize / 80) * diag * 0.45,   // slider-driven size
+        spacing * 3.0                       // floor: always cover a cluster
+    );
+    const r2 = radius * radius;
 
-    if (lastUV) {
-        paintCtx.beginPath();
-        paintCtx.moveTo(lastUV.x, lastUV.y);
-        paintCtx.lineTo(x, y);
-        paintCtx.stroke();
+    const pos = part.positions;
+    const colAttr = part.colorAttr;
+    let changed = false;
+
+    // 1) Always paint the three vertices of the triangle actually under the
+    //    cursor. This guarantees a visible mark even on sparse meshes where the
+    //    radius might otherwise fall between vertices.
+    if (hit.face) {
+        for (const vi of [hit.face.a, hit.face.b, hit.face.c]) {
+            colAttr.setXYZ(vi, color.r, color.g, color.b);
+            changed = true;
+        }
     }
 
-    paintCtx.beginPath();
-    paintCtx.arc(x, y, size, 0, Math.PI * 2);
-    paintCtx.fill();
+    // 2) Paint every vertex within the brush radius of the hit point, with a
+    //    soft falloff so strokes blend.
+    for (let i = 0; i < pos.count; i++) {
+        const dx = pos.getX(i) - _hitLocal.x;
+        const dy = pos.getY(i) - _hitLocal.y;
+        const dz = pos.getZ(i) - _hitLocal.z;
+        const d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 <= r2) {
+            const t = 1 - Math.sqrt(d2) / radius; // 1 at center, 0 at edge
+            const blend = Math.min(1, t * 1.5);
+            const r = colAttr.getX(i) * (1 - blend) + color.r * blend;
+            const g = colAttr.getY(i) * (1 - blend) + color.g * blend;
+            const b = colAttr.getZ(i) * (1 - blend) + color.b * blend;
+            colAttr.setXYZ(i, r, g, b);
+            changed = true;
+        }
+    }
 
-    lastUV = { x, y };
-
-    paintTexture.needsUpdate = true;
+    if (changed) colAttr.needsUpdate = true;
 }
 
 function savePaintedHelmet() {
     const saved = JSON.parse(localStorage.getItem("paintModeData") || "{}");
-    saved.paintTexture = paintCanvas.toDataURL("image/png");
+    const vertexColors = {};
+    for (const p of Object.values(parts)) {
+        vertexColors[p.mesh.name] = Array.from(p.colorAttr.array);
+    }
+    saved.vertexColors = vertexColors;
     localStorage.setItem("paintModeData", JSON.stringify(saved));
 }
 

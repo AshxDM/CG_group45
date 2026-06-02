@@ -93,13 +93,22 @@ async function loadHelmetTemplate(file) {
   });
 
   const savedPaint = JSON.parse(localStorage.getItem("paintModeData") || "{}");
+  const vertexColors = savedPaint.vertexColors || {};
 
   helmet.traverse(child => {
-    if (child.isMesh && savedPaint.paintTexture) {
-      const tex = new THREE.TextureLoader().load(savedPaint.paintTexture);
-      tex.flipY = false;
-      child.material.map = tex;
-      child.material.needsUpdate = true;
+    if (!child.isMesh) return;
+    // Paint is now stored as per-vertex colors keyed by mesh name.
+    const colorData = vertexColors[child.name];
+    if (colorData) {
+      const geo = child.geometry;
+      const count = geo.attributes.position.count;
+      if (colorData.length === count * 3) {
+        geo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(colorData), 3));
+        child.material.vertexColors = true;
+        child.material.map = null;
+        child.material.color.set(0xffffff);
+        child.material.needsUpdate = true;
+      }
     }
   });
 
@@ -363,27 +372,3 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
