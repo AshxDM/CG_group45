@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <title>The Helmet Forge — Paint Mode</title>
-
     <link rel="stylesheet" href="css/layout.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 
@@ -34,10 +33,16 @@
 
         <button id="returnNoSave">Return (Don't Save)</button>
         <button id="returnSave">Return & Save</button>
+        <button id="returnToSlotsBtn">Return to Save Slots</button>
     </div>
+
+    <script>
+        document.getElementById("returnToSlotsBtn").onclick = () => {
+            window.location.href = "index.html";
+        };
+    </script>
 
     <script type="module" src="paint.js"></script>
 </body>
 
 </html>
-

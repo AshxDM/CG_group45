@@ -3,49 +3,90 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>The Helmet Forge — Slots</title>
+    <title>The Helmet Forge — Save Slots</title>
     <link rel="stylesheet" href="css/layout.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
-    <div id="ui-panel" class="draggable">
-        <h2>Save Slots</h2>
+    <div id="save-slots">
+        <h2>SELECT SAVE SLOT</h2>
 
-        <button onclick="selectSlot(1)">Slot 1</button>
-        <button onclick="selectSlot(2)">Slot 2</button>
-        <button onclick="selectSlot(3)">Slot 3</button>
+        <div class="slot-row">
+
+            <div class="slot-box" data-slot="1">
+                <p>SLOT 1</p>
+                <button class="select-btn" data-slot="1">Select</button>
+                <button class="delete-btn delete-slot" data-slot="1">Delete</button>
+            </div>
+
+            <div class="slot-box" data-slot="2">
+                <p>SLOT 2</p>
+                <button class="select-btn" data-slot="2">Select</button>
+                <button class="delete-btn delete-slot" data-slot="2">Delete</button>
+            </div>
+
+            <div class="slot-box" data-slot="3">
+                <p>SLOT 3</p>
+                <button class="select-btn" data-slot="3">Select</button>
+                <button class="delete-btn delete-slot" data-slot="3">Delete</button>
+            </div>
+
+        </div>
+
+        <button id="undoAll" style="display:none; margin-top:20px;">Undo Delete</button>
+
+        <p id="slot-message"></p>
     </div>
 
     <script>
-        function makeDraggable(panel) {
-            let x = 0, y = 0, down = false;
-            panel.addEventListener("pointerdown", e => {
-                down = true;
-                x = e.clientX - panel.offsetLeft;
-                y = e.clientY - panel.offsetTop;
-                panel.style.cursor = "grabbing";
-            });
-            window.addEventListener("pointermove", e => {
-                if (!down) return;
-                panel.style.left = (e.clientX - x) + "px";
-                panel.style.top = (e.clientY - y) + "px";
-            });
-            window.addEventListener("pointerup", () => {
-                down = false;
-                panel.style.cursor = "grab";
-            });
+        const msg = document.getElementById("slot-message");
+        const undoAll = document.getElementById("undoAll");
+
+        let snapshot = null;
+
+        function takeSnapshot() {
+            snapshot = {
+                slot1: localStorage.getItem("slot1"),
+                slot2: localStorage.getItem("slot2"),
+                slot3: localStorage.getItem("slot3")
+            };
         }
 
-        makeDraggable(document.getElementById("ui-panel"));
+        takeSnapshot();
 
-        function selectSlot(n) {
-            localStorage.setItem("activeSlot", n);
-            window.location.href = "CreatorPage.html";
-        }
+        document.querySelectorAll(".select-btn").forEach(btn => {
+            btn.onclick = () => {
+                const slot = btn.getAttribute("data-slot");
+                localStorage.setItem("activeSlot", slot);
+                msg.textContent = "Slot " + slot + " selected";
+                window.location.href = "CreatorPage.html";
+            };
+        });
+
+        document.querySelectorAll(".delete-slot").forEach(btn => {
+            btn.onclick = () => {
+                if (!snapshot) takeSnapshot();
+                const slot = btn.getAttribute("data-slot");
+                localStorage.removeItem("slot" + slot);
+                msg.textContent = "Slot " + slot + " deleted";
+                undoAll.style.display = "block";
+            };
+        });
+
+        undoAll.onclick = () => {
+            if (!snapshot) return;
+            localStorage.setItem("slot1", snapshot.slot1);
+            localStorage.setItem("slot2", snapshot.slot2);
+            localStorage.setItem("slot3", snapshot.slot3);
+            msg.textContent = "Slot/s restored";
+            undoAll.style.display = "none";
+            snapshot = null;
+        };
     </script>
 
 </body>
 
 </html>
+

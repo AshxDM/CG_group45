@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <title>The Helmet Forge — Creator</title>
-
     <link rel="stylesheet" href="css/layout.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 
@@ -38,62 +37,29 @@
         <button id="resetBtn">Reset</button>
         <button id="saveBtn">Save Design</button>
         <button id="paintPageBtn">Paint Mode</button>
+        <button id="returnToSlotsBtn">Return to Save Slots</button>
     </div>
 
     <div id="template-panel" class="draggable">
         <h3>Helmet Templates</h3>
         <button class="template-btn" data-template="MCHelmetV2.glb">MC Helmet</button>
         <button class="template-btn" data-template="SpikeHelmetV2.glb">Spike Helmet</button>
+        <button class="template-btn" data-template="CrownV2.glb">Crown</button>
     </div>
 
     <div id="transform-panel" class="draggable">
         <h3>Transform</h3>
-
         <label>Scale X</label>
         <input type="range" id="scaleX" min="0.5" max="2" step="0.01" value="1">
-
         <label>Scale Y</label>
         <input type="range" id="scaleY" min="0.5" max="2" step="0.01" value="1">
-
         <label>Rotation X</label>
         <input type="range" id="rotX" min="-180" max="180" step="1" value="0">
-
         <label>Rotation Y</label>
         <input type="range" id="rotY" min="-180" max="180" step="1" value="0">
-
         <label>Rotation Z</label>
         <input type="range" id="rotZ" min="-180" max="180" step="1" value="0">
     </div>
-
-    <script>
-        function makeDraggable(panel) {
-            let x = 0, y = 0, down = false;
-            panel.addEventListener("pointerdown", e => {
-                down = true;
-                x = e.clientX - panel.offsetLeft;
-                y = e.clientY - panel.offsetTop;
-                panel.style.cursor = "grabbing";
-            });
-            window.addEventListener("pointermove", e => {
-                if (!down) return;
-                panel.style.left = (e.clientX - x) + "px";
-                panel.style.top = (e.clientY - y) + "px";
-            });
-            window.addEventListener("pointerup", () => {
-                down = false;
-                panel.style.cursor = "grab";
-            });
-        }
-
-        makeDraggable(document.getElementById("ui-panel"));
-        makeDraggable(document.getElementById("template-panel"));
-        makeDraggable(document.getElementById("transform-panel"));
-
-        document.getElementById("paintPageBtn").onclick = () => {
-            saveCurrentDesign();
-            window.location.href = "PaintPage.html";
-        };
-    </script>
 
     <script type="module" src="build.js"></script>
 </body>
