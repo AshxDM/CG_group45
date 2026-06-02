@@ -329,3 +329,52 @@ button:hover {
     width: 100%;
     margin-top: 6px;
 }
+
+#save-slots {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 450px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 3px solid #00ffff;
+    padding: 20px;
+    border-radius: 12px;
+    backdrop-filter: blur(6px);
+}
+
+.slot-row {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.slot-box {
+    background: rgba(0, 255, 255, 0.15);
+    border: 2px solid #00ffff;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.slot-box p {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+}
+
+.select-btn {
+    width: 100%;
+    background: #1e90ff;
+    margin-bottom: 8px;
+}
+
+.delete-slot {
+    width: 100%;
+    background: #ff0044;
+}
+
+#undoAll {
+    width: 100%;
+    background: #ffaa00;
+}

@@ -38,6 +38,7 @@
         <button id="resetBtn">Reset</button>
         <button id="saveBtn">Save Design</button>
         <button id="paintPageBtn">Paint Mode</button>
+        <button id="returnToSlotsBtn">Return to Save Slots</button>
     </div>
 
     <div id="template-panel" class="draggable">
@@ -92,6 +93,10 @@
         document.getElementById("paintPageBtn").onclick = () => {
             saveCurrentDesign();
             window.location.href = "PaintPage.html";
+        };
+
+        document.getElementById("returnToSlotsBtn").onclick = () => {
+            window.location.href = "index.html";
         };
     </script>
 
