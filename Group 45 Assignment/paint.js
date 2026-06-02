@@ -12,6 +12,7 @@ const parts = {};
 let activeMesh = null;
 
 let isPainting = false;
+let isErasing = false;
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -47,30 +48,37 @@ function init() {
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enablePan = false;
-    controls.enableRotate = true;
-    // Left button paints, right button orbits the camera
+    controls.enableRotate = false; // rotation is via the slider; mouse buttons paint/erase
     controls.mouseButtons = {
         LEFT: null,
         MIDDLE: THREE.MOUSE.DOLLY,
-        RIGHT: THREE.MOUSE.ROTATE
+        RIGHT: null
     };
 
     pivot = new THREE.Group();
     scene.add(pivot);
 
     renderer.domElement.addEventListener("pointerdown", e => {
-        if (e.button !== 0) return;       // left button only
-        isPainting = true;
-        paintStroke(e);
+        if (e.button === 0) {            // left = paint
+            isPainting = true;
+            isErasing = false;
+            paintStroke(e);
+        } else if (e.button === 2) {     // right = erase
+            isErasing = true;
+            isPainting = false;
+            paintStroke(e);
+        }
     });
 
     renderer.domElement.addEventListener("pointerup", e => {
-        if (e.button !== 0) return;
-        isPainting = false;
+        if (e.button === 0) isPainting = false;
+        if (e.button === 2) isErasing = false;
     });
 
     renderer.domElement.addEventListener("pointermove", e => {
+        // bit 1 = left button held, bit 2 = right button held
         if (isPainting && (e.buttons & 1)) paintStroke(e);
+        else if (isErasing && (e.buttons & 2)) paintStroke(e);
     });
 
     renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
@@ -159,7 +167,7 @@ async function loadHelmet() {
 
     pivot.add(helmet);
 
-    setLabel("Click and drag to paint");
+    setLabel("Left-drag paints · Right-drag erases");
 }
 
 function estimateSpacing(posAttr) {
@@ -188,7 +196,7 @@ function estimateSpacing(posAttr) {
 }
 
 function paintStroke(e) {
-    if (!isPainting) return;
+    if (!isPainting && !isErasing) return;
 
     const rect = renderer.domElement.getBoundingClientRect();
     mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -210,7 +218,11 @@ function paintStroke(e) {
     _hitLocal.copy(hit.point);
     hitMesh.worldToLocal(_hitLocal);
 
-    const color = new THREE.Color(document.getElementById("colorPicker").value);
+    // Erasing resets vertices to white (the unpainted default); painting uses
+    // the picked colour.
+    const color = isErasing
+        ? new THREE.Color(0xffffff)
+        : new THREE.Color(document.getElementById("colorPicker").value);
 
     // Brush size slider (5..80) -> local radius, scaled to this mesh's size.
     const sliderSize = parseFloat(document.getElementById("brushSize").value);
