@@ -45,8 +45,105 @@ new RGBELoader()
   });
 
 const components = {
-  horns: "./models/Horns.glb"
+  horns: "./models/Horns.glb",
+  crown: "./models/CrownV2.glb"
 };
+
+const randomTemplates = [
+  "MCHelmetV2.glb",
+  "SpikeHelmetV2.glb",
+  "Helmet3.glb"
+];
+
+const randomAccessories = [
+  "horns",
+  "crown"
+];
+
+let uploadedTexture = null;
+
+function randomItem(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function registerDefaults(mesh) {
+  defaultMaterials[mesh.uuid] = mesh.material.clone();
+  defaultTransforms[mesh.uuid] = {
+    scale: mesh.scale.clone(),
+    rotation: mesh.rotation.clone(),
+    position: mesh.position.clone()
+  };
+}
+
+function findMeshByKeyword(root, keywords) {
+  let result = null;
+
+  root.traverse(child => {
+    if (!child.isMesh || result) return;
+
+    const name = child.name.toLowerCase();
+
+    if (keywords.some(keyword => name.includes(keyword))) {
+      result = child;
+    }
+  });
+
+  return result;
+}
+
+async function getPartFromTemplate(file, keywords, newName) {
+  const glb = await gltfLoader.loadAsync("./models/" + file);
+  const root = glb.scene;
+
+  root.updateMatrixWorld(true);
+
+  const sourceMesh = findMeshByKeyword(root, keywords);
+
+  if (!sourceMesh) {
+    console.warn("Could not find part:", newName, "in", file);
+    return null;
+  }
+
+  const clone = sourceMesh.clone();
+  clone.name = newName;
+
+  clone.material = sourceMesh.material.clone();
+
+  clone.applyMatrix4(sourceMesh.matrixWorld);
+
+  registerDefaults(clone);
+
+  return clone;
+}
+
+async function getAccessory(type) {
+  const glb = await gltfLoader.loadAsync(components[type]);
+  const group = new THREE.Group();
+  group.name = type + "_Accessory";
+
+  glb.scene.updateMatrixWorld(true);
+
+  glb.scene.traverse(child => {
+    if (child.isMesh) {
+      const clone = child.clone();
+      clone.name = type + "_" + child.name;
+      clone.material = child.material.clone();
+      clone.applyMatrix4(child.matrixWorld);
+      registerDefaults(clone);
+      group.add(clone);
+    }
+  });
+
+  return group;
+}
+function applyTextureToMesh(mesh, texture) {
+  if (!mesh || !texture) return;
+
+  mesh.material = mesh.material.clone();
+  mesh.material.map = texture;
+  mesh.material.color.set(0xffffff);
+  mesh.material.needsUpdate = true;
+}
 
 const gltfLoader = new GLTFLoader();
 
@@ -67,14 +164,20 @@ const highlightMaterial = new THREE.MeshStandardMaterial({
   roughness: 0.3
 });
 
+
 async function loadHelmetTemplate(file) {
   currentTemplate = file;
 
-  if (helmet) pivot.remove(helmet);
-  if (activeComponent) {
-    pivot.remove(activeComponent);
-    activeComponent = null;
+  deselectMesh();
+
+  while (pivot.children.length > 0) {
+    pivot.remove(pivot.children[0]);
   }
+
+  helmet = null;
+  activeComponent = null;
+  selectedMesh = null;
+  originalMaterial = null;
 
   const glb = await gltfLoader.loadAsync("./models/" + file);
   helmet = glb.scene;
@@ -331,6 +434,43 @@ document.getElementById("colorPicker").addEventListener("input", e => {
   }
 });
 
+document.getElementById("textureInput").addEventListener("change", e => {
+
+  const file = e.target.files[0];
+
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+
+  uploadedTexture = new THREE.TextureLoader().load(url);
+
+  uploadedTexture.flipY = false;
+});
+
+document.getElementById("applyTextureSelectedBtn").addEventListener("click", () => {
+
+  if (!selectedMesh || !uploadedTexture) return;
+
+  applyTextureToMesh(selectedMesh, uploadedTexture);
+
+});
+
+document.getElementById("applyTextureAllBtn").addEventListener("click", () => {
+
+  if (!uploadedTexture) return;
+
+  pivot.traverse(child => {
+
+    if (child.isMesh) {
+
+      applyTextureToMesh(child, uploadedTexture);
+
+    }
+
+  });
+
+});
+
 scaleX.addEventListener("input", () => {
   if (!selectedMesh) return;
   selectedMesh.scale.x = parseFloat(scaleX.value);
@@ -395,6 +535,12 @@ document.getElementById("saveBtn").addEventListener("click", () => {
   alert("Design saved!");
 });
 
+document.getElementById("randomiseBtn").addEventListener("click", async () => {
+
+  await randomiseHelmet();
+
+});
+
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
@@ -408,6 +554,70 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+async function randomiseHelmet() {
+  deselectMesh();
 
+  while (pivot.children.length > 0) {
+    pivot.remove(pivot.children[0]);
+  }
 
+  helmet = null;
+  activeComponent = null;
+  selectedMesh = null;
+  originalMaterial = null;
 
+  defaultMaterials = {};
+  defaultTransforms = {};
+
+  const randomGroup = new THREE.Group();
+  randomGroup.name = "Randomised_Helmet";
+
+  let shell = null;
+  let chin = null;
+  let visor = null;
+  let accessory = null;
+
+  while (!shell) {
+    const shellFile = randomItem(randomTemplates);
+    shell = await getPartFromTemplate(shellFile, ["shell", "helmet"], "Random_Shell");
+  }
+
+  while (!chin) {
+    const chinFile = randomItem(randomTemplates);
+    chin = await getPartFromTemplate(chinFile, ["chin"], "Random_Chin");
+  }
+
+  while (!visor) {
+    const visorFile = randomItem(randomTemplates);
+    visor = await getPartFromTemplate(visorFile, ["visor"], "Random_Visor");
+  }
+
+  const accessoryType = randomItem(randomAccessories);
+  accessory = await getAccessory(accessoryType);
+
+  randomGroup.add(shell);
+  randomGroup.add(chin);
+  randomGroup.add(visor);
+
+  if (accessory) {
+    randomGroup.add(accessory);
+  }
+
+  const box = new THREE.Box3().setFromObject(randomGroup);
+  const center = box.getCenter(new THREE.Vector3());
+  randomGroup.position.sub(center);
+
+  helmet = randomGroup;
+  currentTemplate = "Randomised Helmet";
+
+  pivot.add(helmet);
+
+  document.getElementById("componentSelect").value = "none";
+
+  console.log("Random helmet created:", {
+    shell: shell.name,
+    chin: chin.name,
+    visor: visor.name,
+    accessory: accessoryType
+  });
+}

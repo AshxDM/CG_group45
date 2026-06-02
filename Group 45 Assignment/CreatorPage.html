@@ -30,10 +30,18 @@
         <input type="color" id="colorPicker" value="#ffffff">
 
         <label>Component</label>
-        <select id="componentSelect">
-            <option value="none">None</option>
-            <option value="horns">Horns</option>
-        </select>
+<select id="componentSelect">
+    <option value="none">None</option>
+    <option value="horns">Horns</option>
+    <option value="crown">Crown</option>
+</select>
+
+<button id="randomiseBtn">Randomise Helmet</button>
+
+<label>Texture</label>
+<input type="file" id="textureInput" accept="image/*">
+<button id="applyTextureSelectedBtn">Apply Texture to Selected</button>
+<button id="applyTextureAllBtn">Apply Texture to All</button>
 
         <button id="resetBtn">Reset</button>
         <button id="saveBtn">Save Design</button>
@@ -45,6 +53,7 @@
         <h3>Helmet Templates</h3>
         <button class="template-btn" data-template="MCHelmetV2.glb">MC Helmet</button>
         <button class="template-btn" data-template="SpikeHelmetV2.glb">Spike Helmet</button>
+        <button class="template-btn" data-template="Helmet3.glb">Baseball Helmet</button>
     </div>
 
     <div id="transform-panel" class="draggable">
