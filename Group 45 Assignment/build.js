@@ -7,11 +7,12 @@ let camera, scene, renderer, controls, helmet, pivot;
 let selectedMesh = null;
 let originalMaterial = null;
 let activeComponent = null;
+let componentBaseY = 0;
+let selectedBaseY = 0;
+let selectedBaseX = 0;
 let defaultMaterials = {};
 let defaultTransforms = {};
 let currentTemplate = "MCHelmetV2.glb";
-// When the current helmet is a randomised build, this holds the recipe needed
-// to rebuild it (which file each part came from). null for normal templates.
 let currentRandomRecipe = null;
 
 let activeSlot = localStorage.getItem("activeSlot") || "1";
@@ -323,6 +324,12 @@ async function loadSavedDesign() {
     document.getElementById("componentSelect").value = saved.component;
     activeComponent = await getAccessory(saved.component);
     pivot.add(activeComponent);
+
+    componentBaseY = activeComponent.position.y;
+    const savedHeight = typeof saved.componentHeight === "number" ? saved.componentHeight : 0;
+    activeComponent.position.y = componentBaseY + savedHeight;
+    const heightSlider = document.getElementById("componentHeight");
+    if (heightSlider) heightSlider.value = savedHeight;
   }
 
   applySavedData(saved);
@@ -475,6 +482,14 @@ function selectMesh(mesh) {
   rotX.value = THREE.MathUtils.radToDeg(mesh.rotation.x);
   rotY.value = THREE.MathUtils.radToDeg(mesh.rotation.y);
   rotZ.value = THREE.MathUtils.radToDeg(mesh.rotation.z);
+
+  selectedBaseY = mesh.position.y;
+  const heightSlider = document.getElementById("componentHeight");
+  if (heightSlider) heightSlider.value = 0;
+
+  selectedBaseX = mesh.position.x;
+  const depthSlider = document.getElementById("componentDepth");
+  if (depthSlider) depthSlider.value = 0;
 }
 
 function deselectMesh() {
@@ -490,6 +505,10 @@ function deselectMesh() {
   rotX.value = 0;
   rotY.value = 0;
   rotZ.value = 0;
+  const heightSlider = document.getElementById("componentHeight");
+  if (heightSlider) heightSlider.value = 0;
+  const depthSlider = document.getElementById("componentDepth");
+  if (depthSlider) depthSlider.value = 0;
 }
 
 renderer.domElement.addEventListener("pointerdown", e => {
@@ -535,28 +554,42 @@ document.getElementById("componentSelect").addEventListener("change", async e =>
 
   pivot.add(activeComponent);
 
+  componentBaseY = activeComponent.position.y;
+  const heightSlider = document.getElementById("componentHeight");
+  if (heightSlider) heightSlider.value = 0;
+
   console.log("Dropdown component loaded:", selectedComponent, activeComponent);
 });
 
 document.getElementById("resetBtn").addEventListener("click", () => {
+  deselectMesh();
+
   pivot.traverse(child => {
     if (!child.isMesh) return;
     const id = child.userData.id;
+
     if (defaultMaterials[id] && defaultTransforms[id]) {
       child.material = defaultMaterials[id].clone();
       child.scale.copy(defaultTransforms[id].scale);
       child.rotation.copy(defaultTransforms[id].rotation);
       child.position.copy(defaultTransforms[id].position);
+    } else if (defaultMaterials[child.uuid] && defaultTransforms[child.uuid]) {
+      child.material = defaultMaterials[child.uuid].clone();
+      child.scale.copy(defaultTransforms[child.uuid].scale);
+      child.rotation.copy(defaultTransforms[child.uuid].rotation);
+      child.position.copy(defaultTransforms[child.uuid].position);
     }
-
-    // Remove any paint applied in Paint Mode so it isn't saved back in.
+    if (child.material.map) {
+      child.material.map = null;
+    }
+    if (child.material.emissive) {
+      child.material.emissive.set(0x000000);
+    }
     if (child.geometry.getAttribute("color")) {
       child.geometry.deleteAttribute("color");
     }
     child.material.vertexColors = false;
     child.material.needsUpdate = true;
-
-    // Clear any leftover texture reference too.
     child.userData.textureFile = null;
   });
 
@@ -564,11 +597,11 @@ document.getElementById("resetBtn").addEventListener("click", () => {
     pivot.remove(activeComponent);
     activeComponent = null;
   }
+  componentBaseY = 0;
+  const heightSliderReset = document.getElementById("componentHeight");
+  if (heightSliderReset) heightSliderReset.value = 0;
 
   deselectMesh();
-
-  // Drop any saved paint from paintModeData so re-entering Paint Mode
-  // doesn't restore the colors we just reset.
   const pmd = JSON.parse(localStorage.getItem("paintModeData") || "{}");
   if (pmd.vertexColors) {
     delete pmd.vertexColors;
@@ -687,11 +720,30 @@ rotZ.addEventListener("input", () => {
   selectedMesh.rotation.z = THREE.MathUtils.degToRad(rotZ.value);
 });
 
+const componentHeight = document.getElementById("componentHeight");
+if (componentHeight) {
+  componentHeight.addEventListener("input", () => {
+    if (!selectedMesh) return;
+    selectedMesh.position.y = selectedBaseY + parseFloat(componentHeight.value);
+  });
+} else {
+  console.warn("componentHeight slider not found — is CreatorPage.html up to date?");
+}
+
+const componentDepth = document.getElementById("componentDepth");
+if (componentDepth) {
+  componentDepth.addEventListener("input", () => {
+    if (!selectedMesh) return;
+    selectedMesh.position.x = selectedBaseX + parseFloat(componentDepth.value);
+  });
+}
+
 document.getElementById("saveBtn").addEventListener("click", () => {
   const saveData = {
     template: currentTemplate,
     randomRecipe: currentRandomRecipe,
     component: document.getElementById("componentSelect").value,
+    componentHeight: activeComponent ? (activeComponent.position.y - componentBaseY) : 0,
     materials: {},
     transforms: {},
     vertexColors: {},
@@ -737,6 +789,7 @@ window.saveCurrentDesign = function () {
     template: currentTemplate,
     randomRecipe: currentRandomRecipe,
     component: document.getElementById("componentSelect").value,
+    componentHeight: activeComponent ? (activeComponent.position.y - componentBaseY) : 0,
     materials: {},
     transforms: {},
     vertexColors: {},
@@ -863,9 +916,6 @@ async function randomiseHelmet() {
   });
 }
 
-// Rebuild a randomised helmet from a saved recipe (the exact files each part
-// came from). Used when loading a slot whose template is "Randomised Helmet",
-// since there is no single .glb to reload.
 async function rebuildRandomised(recipe) {
   deselectMesh();
 

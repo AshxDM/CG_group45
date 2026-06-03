@@ -15,7 +15,6 @@ let isErasing = false;
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// reusable temporaries to avoid per-stroke allocation
 const _v = new THREE.Vector3();
 const _hitLocal = new THREE.Vector3();
 
@@ -332,7 +331,7 @@ function paintStroke(e) {
         const dz = pos.getZ(i) - _hitLocal.z;
         const d2 = dx * dx + dy * dy + dz * dz;
         if (d2 <= r2) {
-            const t = 1 - Math.sqrt(d2) / radius; // 1 at center, 0 at edge
+            const t = 1 - Math.sqrt(d2) / radius;
             const blend = Math.min(1, t * 1.5);
             const r = colAttr.getX(i) * (1 - blend) + color.r * blend;
             const g = colAttr.getY(i) * (1 - blend) + color.g * blend;

@@ -101,12 +101,21 @@
 
         <label>Rotation Z</label>
         <input type="range" id="rotZ" min="-180" max="180" step="1" value="0">
+
+        <label>Height</label>
+        <input type="range" id="componentHeight" min="-3" max="3" step="0.01" value="0">
+
+        <label>Width</label>
+        <input type="range" id="componentDepth" min="-3" max="3" step="0.01" value="0">
     </div>
 
     <script>
         function makeDraggable(panel) {
             let x = 0, y = 0, down = false;
             panel.addEventListener("pointerdown", e => {
+                if (e.target.closest("input, select, button, label, textarea")) {
+                    return;
+                }
                 down = true;
                 x = e.clientX - panel.offsetLeft;
                 y = e.clientY - panel.offsetTop;
