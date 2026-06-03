@@ -48,7 +48,7 @@ const components = {
   horns: "./models/Horns.glb",
   crown: "./models/CrownV2.glb",
   halo: "./models/Halo.glb",
-  flower: "/models/Flower.glb"
+  flower: "./models/Flower.glb"
 };
 
 const randomTemplates = [
@@ -66,12 +66,16 @@ const randomAccessories = [
 
 let uploadedTexture = null;
 let presetTexture = null;
+let currentPresetTextureFile = null;
 
 function loadPresetTexture(fileName) {
   if (fileName === "none") {
     presetTexture = null;
+    currentPresetTextureFile = null;
     return;
   }
+
+  currentPresetTextureFile = fileName;
 
   presetTexture = new THREE.TextureLoader().load(
     "./materials/" + fileName,
@@ -81,6 +85,7 @@ function loadPresetTexture(fileName) {
     }
   );
 }
+
 
 function randomItem(array) {
   return array[Math.floor(Math.random() * array.length)];
@@ -185,7 +190,8 @@ async function getAccessory(type) {
 
   return group;
 }
-function applyTextureToMesh(mesh, texture) {
+
+function applyTextureToMesh(mesh, texture, textureFileName = null) {
   if (!mesh || !texture) return;
 
   const targetMaterial = mesh === selectedMesh && originalMaterial
@@ -200,6 +206,8 @@ function applyTextureToMesh(mesh, texture) {
   }
 
   targetMaterial.needsUpdate = true;
+
+  mesh.userData.textureFile = textureFileName;
 }
 
 const gltfLoader = new GLTFLoader();
@@ -239,7 +247,7 @@ async function loadHelmetTemplate(file) {
   const glb = await gltfLoader.loadAsync("./models/" + file);
   helmet = glb.scene;
 
-  const saved = JSON.parse(localStorage.getItem("slot" + activeSlot) || "{}");
+  const saved = {};
   const savedIDs = saved.meshIDs || [];
 
   let index = 0;
@@ -290,6 +298,24 @@ async function loadHelmetTemplate(file) {
   deselectMesh();
 }
 
+async function loadSavedDesign() {
+  const saved = JSON.parse(localStorage.getItem("slot" + activeSlot) || "{}");
+
+  if (!saved.template) return;
+
+  await loadHelmetTemplate(saved.template);
+
+  if (saved.component && saved.component !== "none") {
+    document.getElementById("componentSelect").value = saved.component;
+    activeComponent = await getAccessory(saved.component);
+    pivot.add(activeComponent);
+  }
+
+  applySavedData(saved);
+
+  alert("Loaded saved design from slot " + activeSlot);
+}
+
 function applySavedData(saved) {
   if (!saved.transforms) return;
 
@@ -304,18 +330,37 @@ function applySavedData(saved) {
       child.position.fromArray(t.position);
     }
 
-    if (saved.materials && saved.materials[id]) {
-      const m = saved.materials[id];
-      child.material.color.setHex(m.color);
-      if (child.material.emissive && m.emissive !== null) {
-        child.material.emissive.setHex(m.emissive);
+   if (saved.materials && saved.materials[id]) {
+  const m = saved.materials[id];
+
+  child.material.color.setHex(m.color);
+
+  if (child.material.emissive && m.emissive !== null) {
+    child.material.emissive.setHex(m.emissive);
+  }
+
+  if (m.textureFile) {
+    const tex = new THREE.TextureLoader().load(
+      "./materials/" + m.textureFile,
+      texture => {
+        texture.flipY = false;
+        texture.needsUpdate = true;
       }
+    );
+
+    child.material.map = tex;
+    child.material.color.set(0xffffff);
+
+    if (child.material.emissive) {
+      child.material.emissive.set(0x000000);
     }
+
+    child.material.needsUpdate = true;
+    child.userData.textureFile = m.textureFile;
+  }
+}
   });
 
-  if (saved.component && saved.component !== "none") {
-    loadComponent(saved.component);
-  }
 }
 
 async function loadComponent(name) {
@@ -374,7 +419,13 @@ async function loadComponent(name) {
   pivot.add(activeComponent);
 }
 
-await loadHelmetTemplate("MCHelmetV2.glb");
+const savedAtStart = JSON.parse(localStorage.getItem("slot" + activeSlot) || "{}");
+
+if (savedAtStart.template) {
+  await loadSavedDesign();
+} else {
+  await loadHelmetTemplate("MCHelmetV2.glb");
+}
 
 function selectMesh(mesh) {
   if (selectedMesh) selectedMesh.material = originalMaterial;
@@ -573,7 +624,7 @@ document.getElementById("presetTextureSelect").addEventListener("change", e => {
 document.getElementById("applyPresetTextureSelectedBtn").addEventListener("click", () => {
   if (!selectedMesh || !presetTexture) return;
 
-  applyTextureToMesh(selectedMesh, presetTexture);
+  applyTextureToMesh(selectedMesh, presetTexture, currentPresetTextureFile);
 });
 
 document.getElementById("applyPresetTextureAllBtn").addEventListener("click", () => {
@@ -583,7 +634,7 @@ document.getElementById("applyPresetTextureAllBtn").addEventListener("click", ()
   pivot.traverse(child => {
 
     if (child.isMesh) {
-      applyTextureToMesh(child, presetTexture);
+      applyTextureToMesh(child, presetTexture, currentPresetTextureFile);
     }
 
   });
@@ -616,42 +667,37 @@ rotZ.addEventListener("input", () => {
 });
 
 document.getElementById("saveBtn").addEventListener("click", () => {
-  if (!activeSlot) return;
-
   const saveData = {
     template: currentTemplate,
+    component: document.getElementById("componentSelect").value,
     materials: {},
     transforms: {},
-    component: document.getElementById("componentSelect").value,
-    vertexColors: {},
     meshIDs: []
   };
 
   pivot.traverse(child => {
     if (!child.isMesh) return;
-    const id = child.userData.id;
+
+    const id = child.userData.id || child.name;
 
     saveData.meshIDs.push(id);
 
     saveData.materials[id] = {
-      color: child.material.color.getHex(),
-      emissive: child.material.emissive ? child.material.emissive.getHex() : null
-    };
+  color: child.material.color ? child.material.color.getHex() : 0xffffff,
+  emissive: child.material.emissive ? child.material.emissive.getHex() : null,
+  textureFile: child.userData.textureFile || null
+};
 
     saveData.transforms[id] = {
       scale: child.scale.toArray(),
       rotation: [child.rotation.x, child.rotation.y, child.rotation.z],
       position: child.position.toArray()
     };
-
-    const geo = child.geometry;
-    if (geo.attributes.color) {
-      saveData.vertexColors[id] = Array.from(geo.attributes.color.array);
-    }
   });
 
   localStorage.setItem("slot" + activeSlot, JSON.stringify(saveData));
-  alert("Design saved!");
+
+  alert("Design saved to slot " + activeSlot);
 });
 
 document.getElementById("randomiseBtn").addEventListener("click", async () => {
@@ -659,6 +705,38 @@ document.getElementById("randomiseBtn").addEventListener("click", async () => {
   await randomiseHelmet();
 
 });
+
+window.saveCurrentDesign = function () {
+  const saveData = {
+    template: currentTemplate,
+    component: document.getElementById("componentSelect").value,
+    materials: {},
+    transforms: {},
+    meshIDs: []
+  };
+
+  pivot.traverse(child => {
+    if (!child.isMesh) return;
+
+    const id = child.userData.id || child.name;
+
+    saveData.meshIDs.push(id);
+
+    saveData.materials[id] = {
+      color: child.material.color ? child.material.color.getHex() : 0xffffff,
+      emissive: child.material.emissive ? child.material.emissive.getHex() : null,
+      textureFile: child.userData.textureFile || null
+    };
+
+    saveData.transforms[id] = {
+      scale: child.scale.toArray(),
+      rotation: [child.rotation.x, child.rotation.y, child.rotation.z],
+      position: child.position.toArray()
+    };
+  });
+
+  localStorage.setItem("paintModeData", JSON.stringify(saveData));
+};
 
 function animate() {
   requestAnimationFrame(animate);
