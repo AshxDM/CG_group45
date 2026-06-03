@@ -10,6 +10,9 @@ let activeComponent = null;
 let defaultMaterials = {};
 let defaultTransforms = {};
 let currentTemplate = "MCHelmetV2.glb";
+// When the current helmet is a randomised build, this holds the recipe needed
+// to rebuild it (which file each part came from). null for normal templates.
+let currentRandomRecipe = null;
 
 let activeSlot = localStorage.getItem("activeSlot") || "1";
 
@@ -307,6 +310,12 @@ async function loadSavedDesign() {
   const saved = JSON.parse(localStorage.getItem("slot" + activeSlot) || "{}");
 
   if (!saved.template) return;
+
+  if (saved.template === "Randomised Helmet" && saved.randomRecipe) {
+    await rebuildRandomised(saved.randomRecipe);
+    applySavedData(saved);
+    return;
+  }
 
   await loadHelmetTemplate(saved.template);
 
@@ -681,6 +690,7 @@ rotZ.addEventListener("input", () => {
 document.getElementById("saveBtn").addEventListener("click", () => {
   const saveData = {
     template: currentTemplate,
+    randomRecipe: currentRandomRecipe,
     component: document.getElementById("componentSelect").value,
     materials: {},
     transforms: {},
@@ -725,6 +735,7 @@ document.getElementById("randomiseBtn").addEventListener("click", async () => {
 window.saveCurrentDesign = function () {
   const saveData = {
     template: currentTemplate,
+    randomRecipe: currentRandomRecipe,
     component: document.getElementById("componentSelect").value,
     materials: {},
     transforms: {},
@@ -797,18 +808,22 @@ async function randomiseHelmet() {
   let visor = null;
   let accessory = null;
 
+  let shellFile = null;
+  let chinFile = null;
+  let visorFile = null;
+
   while (!shell) {
-    const shellFile = randomItem(randomTemplates);
+    shellFile = randomItem(randomTemplates);
     shell = await getPartFromTemplate(shellFile, ["shell", "helmet"], "Random_Shell");
   }
 
   while (!chin) {
-    const chinFile = randomItem(randomTemplates);
+    chinFile = randomItem(randomTemplates);
     chin = await getPartFromTemplate(chinFile, ["chin"], "Random_Chin");
   }
 
   while (!visor) {
-    const visorFile = randomItem(randomTemplates);
+    visorFile = randomItem(randomTemplates);
     visor = await getPartFromTemplate(visorFile, ["visor"], "Random_Visor");
   }
 
@@ -829,6 +844,12 @@ async function randomiseHelmet() {
 
   helmet = randomGroup;
   currentTemplate = "Randomised Helmet";
+  currentRandomRecipe = {
+    shellFile,
+    chinFile,
+    visorFile,
+    accessoryType
+  };
 
   pivot.add(helmet);
 
@@ -840,4 +861,50 @@ async function randomiseHelmet() {
     visor: visor.name,
     accessory: accessoryType
   });
+}
+
+// Rebuild a randomised helmet from a saved recipe (the exact files each part
+// came from). Used when loading a slot whose template is "Randomised Helmet",
+// since there is no single .glb to reload.
+async function rebuildRandomised(recipe) {
+  deselectMesh();
+
+  while (pivot.children.length > 0) {
+    pivot.remove(pivot.children[0]);
+  }
+
+  helmet = null;
+  activeComponent = null;
+  selectedMesh = null;
+  originalMaterial = null;
+
+  defaultMaterials = {};
+  defaultTransforms = {};
+
+  const randomGroup = new THREE.Group();
+  randomGroup.name = "Randomised_Helmet";
+
+  const shell = await getPartFromTemplate(recipe.shellFile, ["shell", "helmet"], "Random_Shell");
+  const chin = await getPartFromTemplate(recipe.chinFile, ["chin"], "Random_Chin");
+  const visor = await getPartFromTemplate(recipe.visorFile, ["visor"], "Random_Visor");
+
+  if (shell) randomGroup.add(shell);
+  if (chin) randomGroup.add(chin);
+  if (visor) randomGroup.add(visor);
+
+  if (recipe.accessoryType) {
+    const accessory = await getAccessory(recipe.accessoryType);
+    if (accessory) randomGroup.add(accessory);
+  }
+
+  const box = new THREE.Box3().setFromObject(randomGroup);
+  const center = box.getCenter(new THREE.Vector3());
+  randomGroup.position.sub(center);
+
+  helmet = randomGroup;
+  currentTemplate = "Randomised Helmet";
+  currentRandomRecipe = recipe;
+
+  pivot.add(helmet);
+  document.getElementById("componentSelect").value = "none";
 }
