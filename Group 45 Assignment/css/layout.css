@@ -298,6 +298,40 @@ button:hover {
     color: #00ffff;
 }
 
+#randomise-panel {
+    position: fixed;
+    top: 295px;
+    right: 20px;
+    width: 220px;
+
+    background: rgba(0, 255, 255, 0.1);
+    border: 4px solid rgb(85, 0, 128);
+    padding: 20px;
+    border-radius: 10px;
+    backdrop-filter: blur(6px);
+
+    color: #00ffff;
+    text-align: center;
+}
+
+#randomise-panel h3 {
+    margin-top: 0;
+    text-align: center;
+    font-size: 18px;
+}
+
+#randomise-panel button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 12px;
+
+    background: #001f2f;
+    border: 1px solid rgb(85, 0, 128);
+    border-radius: 6px;
+
+    color: #00ffff;
+}
+
 #transform-panel {
     position: fixed;
     bottom: 20px;

@@ -36,12 +36,27 @@
     <option value="crown">Crown</option>
 </select>
 
-<button id="randomiseBtn">Randomise Helmet</button>
 
 <label>Texture</label>
 <input type="file" id="textureInput" accept="image/*">
 <button id="applyTextureSelectedBtn">Apply Texture to Selected</button>
 <button id="applyTextureAllBtn">Apply Texture to All</button>
+
+<label>Preset Texture</label>
+<select id="presetTextureSelect">
+    <option value="none">None</option>
+    <option value="metal.jpg">Metal</option>
+    <option value="gold.jpg">Gold</option>
+    <option value="carbon.jpg">Carbon Fibre</option>
+    <option value="matte.jpg">Matte</option>
+    <option value="hologram.jpg">Hologram</option>
+    <option value="chrome.jpg">Chrome</option>
+</select>
+
+<button id="applyPresetTextureSelectedBtn">Apply Preset to Selected</button>
+<button id="applyPresetTextureAllBtn">Apply Preset to All</button>
+
+
 
         <button id="resetBtn">Reset</button>
         <button id="saveBtn">Save Design</button>
@@ -55,6 +70,11 @@
         <button class="template-btn" data-template="SpikeHelmetV2.glb">Spike Helmet</button>
         <button class="template-btn" data-template="Helmet3.glb">Baseball Helmet</button>
     </div>
+
+    <div id="randomise-panel" class="draggable">
+    <h3>Randomise</h3>
+    <button id="randomiseBtn">Randomise Helmet</button>
+</div>
 
     <div id="transform-panel" class="draggable">
         <h3>Transform</h3>
@@ -97,6 +117,7 @@
 
         makeDraggable(document.getElementById("ui-panel"));
         makeDraggable(document.getElementById("template-panel"));
+        makeDraggable(document.getElementById("randomise-panel"));
         makeDraggable(document.getElementById("transform-panel"));
 
         document.getElementById("paintPageBtn").onclick = () => {

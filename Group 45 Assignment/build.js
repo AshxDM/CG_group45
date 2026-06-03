@@ -61,6 +61,22 @@ const randomAccessories = [
 ];
 
 let uploadedTexture = null;
+let presetTexture = null;
+
+function loadPresetTexture(fileName) {
+  if (fileName === "none") {
+    presetTexture = null;
+    return;
+  }
+
+  presetTexture = new THREE.TextureLoader().load(
+    "./materials/" + fileName,
+    texture => {
+      texture.flipY = false;
+      texture.needsUpdate = true;
+    }
+  );
+}
 
 function randomItem(array) {
   return array[Math.floor(Math.random() * array.length)];
@@ -104,12 +120,25 @@ async function getPartFromTemplate(file, keywords, newName) {
     return null;
   }
 
-  const clone = sourceMesh.clone();
+  const clone = new THREE.Mesh(
+    sourceMesh.geometry.clone(),
+    sourceMesh.material.clone()
+  );
+
   clone.name = newName;
+  clone.userData.id = newName;
 
-  clone.material = sourceMesh.material.clone();
+  const worldPosition = new THREE.Vector3();
+  const worldQuaternion = new THREE.Quaternion();
+  const worldScale = new THREE.Vector3();
 
-  clone.applyMatrix4(sourceMesh.matrixWorld);
+  sourceMesh.getWorldPosition(worldPosition);
+  sourceMesh.getWorldQuaternion(worldQuaternion);
+  sourceMesh.getWorldScale(worldScale);
+
+  clone.position.copy(worldPosition);
+  clone.quaternion.copy(worldQuaternion);
+  clone.scale.copy(worldScale);
 
   registerDefaults(clone);
 
@@ -125,10 +154,26 @@ async function getAccessory(type) {
 
   glb.scene.traverse(child => {
     if (child.isMesh) {
-      const clone = child.clone();
+      const clone = new THREE.Mesh(
+        child.geometry.clone(),
+        child.material.clone()
+      );
+
       clone.name = type + "_" + child.name;
-      clone.material = child.material.clone();
-      clone.applyMatrix4(child.matrixWorld);
+      clone.userData.id = clone.name;
+
+      const worldPosition = new THREE.Vector3();
+      const worldQuaternion = new THREE.Quaternion();
+      const worldScale = new THREE.Vector3();
+
+      child.getWorldPosition(worldPosition);
+      child.getWorldQuaternion(worldQuaternion);
+      child.getWorldScale(worldScale);
+
+      clone.position.copy(worldPosition);
+      clone.quaternion.copy(worldQuaternion);
+      clone.scale.copy(worldScale);
+
       registerDefaults(clone);
       group.add(clone);
     }
@@ -139,10 +184,18 @@ async function getAccessory(type) {
 function applyTextureToMesh(mesh, texture) {
   if (!mesh || !texture) return;
 
-  mesh.material = mesh.material.clone();
-  mesh.material.map = texture;
-  mesh.material.color.set(0xffffff);
-  mesh.material.needsUpdate = true;
+  const targetMaterial = mesh === selectedMesh && originalMaterial
+    ? originalMaterial
+    : mesh.material;
+
+  targetMaterial.map = texture;
+  targetMaterial.color.set(0xffffff);
+
+  if (targetMaterial.emissive) {
+    targetMaterial.emissive.set(0x000000);
+  }
+
+  targetMaterial.needsUpdate = true;
 }
 
 const gltfLoader = new GLTFLoader();
@@ -263,24 +316,52 @@ function applySavedData(saved) {
 
 async function loadComponent(name) {
   const compGlb = await gltfLoader.loadAsync(components[name]);
+
   activeComponent = new THREE.Group();
+  activeComponent.name = name + "_Component";
+
+  compGlb.scene.updateMatrixWorld(true);
 
   let index = 0;
 
   compGlb.scene.traverse(child => {
     if (child.isMesh) {
-      const id = name + "_" + index;
-      child.userData.id = id;
-      defaultMaterials[id] = child.material.clone();
-      defaultTransforms[id] = {
-        scale: child.scale.clone(),
-        rotation: child.rotation.clone(),
-        position: child.position.clone()
+      const clone = new THREE.Mesh(
+        child.geometry.clone(),
+        child.material.clone()
+      );
+
+      clone.name = name + "_" + child.name;
+      clone.userData.id = name + "_" + index;
+
+      const worldPosition = new THREE.Vector3();
+      const worldQuaternion = new THREE.Quaternion();
+      const worldScale = new THREE.Vector3();
+
+      child.getWorldPosition(worldPosition);
+      child.getWorldQuaternion(worldQuaternion);
+      child.getWorldScale(worldScale);
+
+      clone.position.copy(worldPosition);
+      clone.quaternion.copy(worldQuaternion);
+      clone.scale.copy(worldScale);
+
+      defaultMaterials[clone.userData.id] = clone.material.clone();
+      defaultTransforms[clone.userData.id] = {
+        scale: clone.scale.clone(),
+        rotation: clone.rotation.clone(),
+        position: clone.position.clone()
       };
-      activeComponent.add(child);
+
+      activeComponent.add(clone);
       index++;
     }
   });
+
+  if (activeComponent.children.length === 0) {
+    console.warn("No meshes found in component:", name);
+    return;
+  }
 
   const cbox = new THREE.Box3().setFromObject(activeComponent);
   const ccenter = cbox.getCenter(new THREE.Vector3());
@@ -386,9 +467,21 @@ document.getElementById("componentSelect").addEventListener("change", async e =>
     activeComponent = null;
   }
 
-  if (e.target.value === "none") return;
+  const selectedComponent = e.target.value;
 
-  await loadComponent(e.target.value);
+  if (selectedComponent === "none") return;
+
+  activeComponent = await getAccessory(selectedComponent);
+
+  if (!activeComponent || activeComponent.children.length === 0) {
+    console.warn("Component failed to load:", selectedComponent);
+    activeComponent = null;
+    return;
+  }
+
+  pivot.add(activeComponent);
+
+  console.log("Dropdown component loaded:", selectedComponent, activeComponent);
 });
 
 document.getElementById("resetBtn").addEventListener("click", () => {
@@ -448,11 +541,9 @@ document.getElementById("textureInput").addEventListener("change", e => {
 });
 
 document.getElementById("applyTextureSelectedBtn").addEventListener("click", () => {
-
   if (!selectedMesh || !uploadedTexture) return;
 
   applyTextureToMesh(selectedMesh, uploadedTexture);
-
 });
 
 document.getElementById("applyTextureAllBtn").addEventListener("click", () => {
@@ -465,6 +556,30 @@ document.getElementById("applyTextureAllBtn").addEventListener("click", () => {
 
       applyTextureToMesh(child, uploadedTexture);
 
+    }
+
+  });
+
+});
+
+document.getElementById("presetTextureSelect").addEventListener("change", e => {
+  loadPresetTexture(e.target.value);
+});
+
+document.getElementById("applyPresetTextureSelectedBtn").addEventListener("click", () => {
+  if (!selectedMesh || !presetTexture) return;
+
+  applyTextureToMesh(selectedMesh, presetTexture);
+});
+
+document.getElementById("applyPresetTextureAllBtn").addEventListener("click", () => {
+
+  if (!presetTexture) return;
+
+  pivot.traverse(child => {
+
+    if (child.isMesh) {
+      applyTextureToMesh(child, presetTexture);
     }
 
   });
