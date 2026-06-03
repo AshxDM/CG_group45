@@ -105,6 +105,9 @@ function setLabel(text) {
 
 async function loadHelmet() {
     const saved = JSON.parse(localStorage.getItem("paintModeData") || "{}");
+    const savedIDs = saved.meshIDs || [];
+    let meshIndex = 0;
+
     const template = saved.template || "MCHelmetV2.glb";
 
     const loader = new GLTFLoader();
@@ -115,6 +118,10 @@ async function loadHelmet() {
 
     helmet.traverse(child => {
         if (!child.isMesh) return;
+
+        const id = savedIDs[meshIndex] || child.name;
+        child.userData.id = id;
+        meshIndex++;
 
         const geo = child.geometry;
         const count = geo.attributes.position.count;
@@ -127,7 +134,7 @@ async function loadHelmet() {
             geo.setAttribute("color", colorAttr);
         }
 
-        const prev = savedColors[child.name];
+        const prev = savedColors[id];
         if (prev && prev.length === count * 3) {
             colorAttr.copyArray(prev);
             colorAttr.needsUpdate = true;
@@ -141,8 +148,8 @@ async function loadHelmet() {
         child.material.needsUpdate = true;
 
         // restore transforms from the creator stage
-        if (saved.transforms && saved.transforms[child.name]) {
-            const t = saved.transforms[child.name];
+        if (saved.transforms && saved.transforms[id]) {
+        const t = saved.transforms[id];
             child.scale.fromArray(t.scale);
             child.rotation.set(t.rotation[0], t.rotation[1], t.rotation[2]);
             child.position.fromArray(t.position);
@@ -272,12 +279,20 @@ function paintStroke(e) {
 
 function savePaintedHelmet() {
     const saved = JSON.parse(localStorage.getItem("paintModeData") || "{}");
+
     const vertexColors = {};
+
     for (const p of Object.values(parts)) {
-        vertexColors[p.mesh.name] = Array.from(p.colorAttr.array);
+        const id = p.mesh.userData.id || p.mesh.name;
+        vertexColors[id] = Array.from(p.colorAttr.array);
     }
+
     saved.vertexColors = vertexColors;
+
+    const activeSlot = localStorage.getItem("activeSlot") || "1";
+
     localStorage.setItem("paintModeData", JSON.stringify(saved));
+    localStorage.setItem("slot" + activeSlot, JSON.stringify(saved));
 }
 
 function animate() {

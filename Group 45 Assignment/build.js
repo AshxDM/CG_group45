@@ -359,6 +359,28 @@ function applySavedData(saved) {
     child.userData.textureFile = m.textureFile;
   }
 }
+
+if (saved.vertexColors && saved.vertexColors[id]) {
+  const geo = child.geometry;
+  const colorData = saved.vertexColors[id];
+
+  if (colorData.length === geo.attributes.position.count * 3) {
+    geo.setAttribute(
+      "color",
+      new THREE.BufferAttribute(new Float32Array(colorData), 3)
+    );
+
+    child.material.vertexColors = true;
+    child.material.map = null;
+    child.material.color.set(0xffffff);
+
+    if (child.material.emissive) {
+      child.material.emissive.set(0x000000);
+    }
+
+    child.material.needsUpdate = true;
+  }
+}
   });
 
 }
@@ -672,6 +694,7 @@ document.getElementById("saveBtn").addEventListener("click", () => {
     component: document.getElementById("componentSelect").value,
     materials: {},
     transforms: {},
+    vertexColors: {},
     meshIDs: []
   };
 
@@ -687,6 +710,11 @@ document.getElementById("saveBtn").addEventListener("click", () => {
   emissive: child.material.emissive ? child.material.emissive.getHex() : null,
   textureFile: child.userData.textureFile || null
 };
+const geo = child.geometry;
+
+if (geo.attributes.color) {
+  saveData.vertexColors[id] = Array.from(geo.attributes.color.array);
+}
 
     saveData.transforms[id] = {
       scale: child.scale.toArray(),
@@ -712,6 +740,7 @@ window.saveCurrentDesign = function () {
     component: document.getElementById("componentSelect").value,
     materials: {},
     transforms: {},
+    vertexColors: {},
     meshIDs: []
   };
 
@@ -727,12 +756,18 @@ window.saveCurrentDesign = function () {
       emissive: child.material.emissive ? child.material.emissive.getHex() : null,
       textureFile: child.userData.textureFile || null
     };
+    const geo = child.geometry;
+
+if (geo.attributes.color) {
+  saveData.vertexColors[id] = Array.from(geo.attributes.color.array);
+}
 
     saveData.transforms[id] = {
       scale: child.scale.toArray(),
       rotation: [child.rotation.x, child.rotation.y, child.rotation.z],
       position: child.position.toArray()
     };
+  
   });
 
   localStorage.setItem("paintModeData", JSON.stringify(saveData));
