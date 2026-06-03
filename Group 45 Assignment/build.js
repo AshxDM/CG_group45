@@ -36,13 +36,18 @@ controls.enableRotate = false;
 controls.enablePan = false;
 controls.enableZoom = true;
 
-new RGBELoader()
-  .setPath("./background/")
-  .load("monochrome_studio_02_4k.hdr", t => {
+const rgbeLoader = new RGBELoader().setPath("./background/");
+
+function loadBackground(fileName) {
+  rgbeLoader.load(fileName, t => {
     t.mapping = THREE.EquirectangularReflectionMapping;
-    scene.environment = t;
-    scene.background = t;
+    scene.environment = t;   // affects reflections/lighting
+    scene.background = t;     // the visible backdrop
   });
+}
+
+// initial background
+loadBackground("monochrome_studio_02_4k.hdr");
 
 const components = {
   horns: "./models/Horns.glb",
@@ -312,8 +317,6 @@ async function loadSavedDesign() {
   }
 
   applySavedData(saved);
-
-  alert("Loaded saved design from slot " + activeSlot);
 }
 
 function applySavedData(saved) {
@@ -649,6 +652,10 @@ document.getElementById("applyPresetTextureSelectedBtn").addEventListener("click
   applyTextureToMesh(selectedMesh, presetTexture, currentPresetTextureFile);
 });
 
+document.getElementById("backgroundSelect").addEventListener("change", e => {
+  loadBackground(e.target.value);
+});
+
 document.getElementById("applyPresetTextureAllBtn").addEventListener("click", () => {
 
   if (!presetTexture) return;
@@ -724,8 +731,6 @@ if (geo.attributes.color) {
   });
 
   localStorage.setItem("slot" + activeSlot, JSON.stringify(saveData));
-
-  alert("Design saved to slot " + activeSlot);
 });
 
 document.getElementById("randomiseBtn").addEventListener("click", async () => {
