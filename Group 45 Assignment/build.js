@@ -11,7 +11,7 @@ let defaultMaterials = {};
 let defaultTransforms = {};
 let currentTemplate = "MCHelmetV2.glb";
 
-let activeSlot = localStorage.getItem("activeSlot");
+let activeSlot = localStorage.getItem("activeSlot") || "1";
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -47,7 +47,8 @@ new RGBELoader()
 const components = {
   horns: "./models/Horns.glb",
   crown: "./models/CrownV2.glb",
-  halo: "./models/Halo.glb"
+  halo: "./models/Halo.glb",
+  flower: "/models/Flower.glb"
 };
 
 const randomTemplates = [
@@ -59,7 +60,8 @@ const randomTemplates = [
 const randomAccessories = [
   "horns",
   "crown",
-  "halo"
+  "halo",
+  "flower"
 ];
 
 let uploadedTexture = null;
