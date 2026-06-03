@@ -46,7 +46,8 @@ new RGBELoader()
 
 const components = {
   horns: "./models/Horns.glb",
-  crown: "./models/CrownV2.glb"
+  crown: "./models/CrownV2.glb",
+  halo: "./models/Halo.glb"
 };
 
 const randomTemplates = [
@@ -57,7 +58,8 @@ const randomTemplates = [
 
 const randomAccessories = [
   "horns",
-  "crown"
+  "crown",
+  "halo"
 ];
 
 let uploadedTexture = null;
