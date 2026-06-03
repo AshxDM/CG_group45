@@ -16,11 +16,6 @@ let activeSlot = localStorage.getItem("activeSlot") || "1";
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-let draggingMove = false;
-let draggingRotate = false;
-let prevX = 0;
-let prevY = 0;
-
 camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
 camera.position.set(10, 0, 0);
 camera.lookAt(0, 0, 0);
@@ -32,17 +27,22 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 controls = new OrbitControls(camera, renderer.domElement);
-controls.enableRotate = false;
+controls.enableRotate = true;
 controls.enablePan = false;
 controls.enableZoom = true;
+
+controls.mouseButtons = {
+  MIDDLE: THREE.MOUSE.DOLLY,
+  RIGHT: THREE.MOUSE.ROTATE
+};
 
 const rgbeLoader = new RGBELoader().setPath("./background/");
 
 function loadBackground(fileName) {
   rgbeLoader.load(fileName, t => {
     t.mapping = THREE.EquirectangularReflectionMapping;
-    scene.environment = t;   // affects reflections/lighting
-    scene.background = t;     // the visible backdrop
+    scene.environment = t;
+    scene.background = t;
   });
 }
 
@@ -492,45 +492,10 @@ renderer.domElement.addEventListener("pointerdown", e => {
   const hits = raycaster.intersectObject(pivot, true);
 
   if (hits.length > 0) {
-    const obj = hits[0].object;
-
-    selectMesh(obj);
-
-    if (activeComponent && activeComponent.children.includes(obj)) {
-      draggingMove = true;
-      prevX = e.clientX;
-      prevY = e.clientY;
-    } else {
-      draggingRotate = true;
-      prevX = e.clientX;
-    }
+    selectMesh(hits[0].object);
   } else {
     deselectMesh();
-    draggingRotate = true;
-    prevX = e.clientX;
   }
-});
-
-window.addEventListener("pointermove", e => {
-  if (draggingMove && selectedMesh) {
-    const dx = e.clientX - prevX;
-    const dy = e.clientY - prevY;
-
-    selectedMesh.position.z += dx * 0.02;
-    selectedMesh.position.y -= dy * 0.02;
-
-    prevX = e.clientX;
-    prevY = e.clientY;
-  } else if (draggingRotate) {
-    const deltaX = e.clientX - prevX;
-    pivot.rotation.y += deltaX * 0.01;
-    prevX = e.clientX;
-  }
-});
-
-window.addEventListener("pointerup", () => {
-  draggingMove = false;
-  draggingRotate = false;
 });
 
 document.querySelectorAll(".template-btn").forEach(btn => {
@@ -574,6 +539,16 @@ document.getElementById("resetBtn").addEventListener("click", () => {
       child.rotation.copy(defaultTransforms[id].rotation);
       child.position.copy(defaultTransforms[id].position);
     }
+
+    // Remove any paint applied in Paint Mode so it isn't saved back in.
+    if (child.geometry.getAttribute("color")) {
+      child.geometry.deleteAttribute("color");
+    }
+    child.material.vertexColors = false;
+    child.material.needsUpdate = true;
+
+    // Clear any leftover texture reference too.
+    child.userData.textureFile = null;
   });
 
   if (activeComponent) {
@@ -582,6 +557,14 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   }
 
   deselectMesh();
+
+  // Drop any saved paint from paintModeData so re-entering Paint Mode
+  // doesn't restore the colors we just reset.
+  const pmd = JSON.parse(localStorage.getItem("paintModeData") || "{}");
+  if (pmd.vertexColors) {
+    delete pmd.vertexColors;
+    localStorage.setItem("paintModeData", JSON.stringify(pmd));
+  }
 
   document.getElementById("colorPicker").value = "#ffffff";
   document.getElementById("componentSelect").value = "none";
