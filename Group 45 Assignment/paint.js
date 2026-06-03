@@ -35,9 +35,6 @@ function init() {
     renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
-    // Same lighting as the Creator page: the HDR is the only light source and
-    // also serves as the background. No extra ambient/directional lights, which
-    // is what was over-brightening the helmet to white.
     new RGBELoader()
         .setPath("./background/")
         .load("monochrome_studio_02_4k.hdr", hdr => {
@@ -48,10 +45,10 @@ function init() {
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enablePan = false;
-    controls.enableRotate = false; // rotation is via the slider; mouse buttons paint/erase
+    controls.enableRotate = true; 
     controls.mouseButtons = {
         LEFT: null,
-        MIDDLE: THREE.MOUSE.DOLLY,
+        MIDDLE: THREE.MOUSE.ROTATE,
         RIGHT: null
     };
 
@@ -167,7 +164,7 @@ async function loadHelmet() {
 
     pivot.add(helmet);
 
-    setLabel("Left-drag paints · Right-drag erases");
+    setLabel("Left-drag paints · Right-drag erases · Middle-rotate helmet");
 }
 
 function estimateSpacing(posAttr) {
